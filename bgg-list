@@ -1,0 +1,201 @@
+#!/usr/bin/env python3
+
+import requests
+import xml.etree.ElementTree as ET
+import argparse
+import time
+import csv
+from collections import defaultdict
+
+def fetch_collection(username):
+    print(f"Fetching collection for {username}...")
+    url = f"https://boardgamegeek.com/xmlapi2/collection?username={username}&own=1"
+    response = requests.get(url)
+
+    while response.status_code == 202:
+        print(f"{username}'s collection not ready. Retrying in 5 seconds...")
+        time.sleep(5)
+        response = requests.get(url)
+
+    if response.status_code != 200:
+        raise Exception(f"Failed to fetch collection for {username}: {response.status_code}")
+
+    root = ET.fromstring(response.text)
+    return [item.attrib['objectid'] for item in root.findall('item')]
+
+def fetch_game_details(game_ids, id_to_owners):
+    games_info = {}
+    
+    for i in range(0, len(game_ids), 20):
+        batch_ids = ",".join(game_ids[i:i+20])
+        url = f"https://boardgamegeek.com/xmlapi2/thing?id={batch_ids}&stats=1"
+        response = requests.get(url)
+        time.sleep(1)
+
+        if response.status_code != 200:
+            print(f"Failed to fetch batch: {batch_ids}")
+            continue
+
+        try:
+            root = ET.fromstring(response.text)
+        except ET.ParseError:
+            print("Parse error for batch:", batch_ids)
+            continue
+
+        for item in root.findall("item"):
+            game_id = item.attrib.get("id")
+
+            name = item.find("name").attrib.get("value", "Unknown")
+            year = item.find("yearpublished").attrib.get("value", "N/A")
+            min_players = item.find("minplayers").attrib.get("value", "1")
+            max_players = item.find("maxplayers").attrib.get("value", "1")
+            playing_time = item.find("playingtime").attrib.get("value", "0")
+            min_age = item.find("minage").attrib.get("value", "0")
+
+            categories = [link.attrib['value'] for link in item.findall("link") if link.attrib.get("type") == "boardgamecategory"]
+            category = ", ".join(categories[:2]) if categories else "N/A"
+
+            rank_value = "-"
+            sort_rank = float('inf')
+            ranks = item.find("statistics").find("ratings").find("ranks")
+            for rank in ranks.findall("rank"):
+                if rank.attrib.get("name") == "boardgame":
+                    val = rank.attrib.get("value")
+                    if val.isdigit():
+                        rank_value = val
+                        sort_rank = int(val)
+                    break
+
+            games_info[game_id] = {
+                "id": game_id,
+                "name": name,
+                "year": year,
+                "rank": rank_value,
+                "sort_rank": sort_rank,
+                "min_players": min_players,
+                "max_players": max_players,
+                "playing_time": playing_time,
+                "min_age": min_age,
+                "category": category,
+                "owner": ", ".join(sorted(id_to_owners.get(game_id, [])))
+            }
+
+    return list(games_info.values())
+
+def filter_by_player_count(games_info, player_count):
+    if player_count is None:
+        return games_info
+    return [
+        game for game in games_info
+        if int(game['min_players']) <= player_count <= int(game['max_players'])
+    ]
+
+def sort_games(games_info, sort_field):
+    if sort_field == "rank":
+        return sorted(games_info, key=lambda x: x['sort_rank'])
+    elif sort_field == "year":
+        return sorted(games_info, key=lambda x: int(x['year']) if x['year'].isdigit() else 9999)
+    elif sort_field == "playtime":
+        return sorted(games_info, key=lambda x: int(x['playing_time']))
+    elif sort_field == "name":
+        return sorted(games_info, key=lambda x: x['name'].lower())
+    else:
+        print("Invalid sort field. Defaulting to rank.")
+        return sorted(games_info, key=lambda x: x['sort_rank'])
+
+def print_table(games_info, show_owner=False):
+    print("\nFiltered Board Game Collection:\n")
+    
+    header = f"{'Game':30} | {'Year':4} | {'Rank':5} | {'Players':9} | {'Time':5} | {'Age':3} | {'Category':25}"
+    if show_owner:
+        header += " | Owner"
+    print(header)
+    print("-" * len(header))
+
+    for game in games_info:
+        players = f"{game['min_players']}-{game['max_players']}"
+        row = f"{game['name'][:30]:30} | {game['year']:4} | {game['rank']:5} | {players:9} | {game['playing_time']:5} | {game['min_age']:3} | {game['category'][:25]:25}"
+        if show_owner:
+            row += f" | {game['owner']}"
+        print(row)
+
+def export_to_csv(games_info, filename="bgg_collection.csv"):
+    games_info = sorted(games_info, key=lambda x: x['name'].lower())  # Alphabetical sort
+    with open(filename, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Game", "Year", "Board Game Rank", "Players", "Play time", "Min age", "Category", "Owner", "URL"])
+
+        for game in games_info:
+            players = f"{game['min_players']}-{game['max_players']}"
+            url = f"https://boardgamegeek.com/boardgame/{game['id']}"
+            writer.writerow([
+                game["name"],
+                game["year"],
+                game["rank"],
+                players,
+                game["playing_time"],
+                game["min_age"],
+                game["category"],
+                game["owner"],
+                url
+            ])
+    print(f"\n✅ Full collection exported to '{filename}'")
+
+def main():
+
+    parser = argparse.ArgumentParser(description="Fetch BGG board game collections.", add_help=False)
+    parser.add_argument('-u', '--users', help='Comma-separated list of BGG usernames')
+    parser.add_argument('-p', '--players', help='Number of players', type=int)
+    parser.add_argument('-s', '--sort', help='Field to sort by: name, rank, year, playtime', choices=['name', 'rank', 'year', 'playtime'])
+    parser.add_argument('-h', '--help', action='help', help='Show this help message and exit')
+
+    args = parser.parse_args()
+
+    if not args.users:
+        args.users = input("Enter BoardGameGeek username(s) (comma-separated if multiple): ")
+    usernames = [u.strip() for u in args.users.split(',') if u.strip()]
+    id_to_owners = defaultdict(set)
+
+    for username in usernames:
+        try:
+            game_ids = fetch_collection(username)
+            for gid in game_ids:
+                id_to_owners[gid].add(username)
+        except Exception as e:
+            print(f"Error with user '{username}':", e)
+
+    all_game_ids = list(id_to_owners.keys())
+    if not all_game_ids:
+        print("❌ No games found.")
+        return
+
+    print(f"Total unique games found: {len(all_game_ids)}")
+    all_games = fetch_game_details(all_game_ids, id_to_owners)
+
+    # Export full collection to CSV (always alphabetical)
+    export_to_csv(all_games)
+
+    # Optional player num filter
+    player_count = args.players
+    if player_count is None:
+        player_input = input("Filter by number of players? (press Enter to skip): ")
+        player_count = int(player_input) if player_input.strip().isdigit() else None
+
+    sort_field = args.sort
+    if not sort_field:
+        sort_field = input("Sort field (name, rank, year, playtime)? (press Enter to use default 'name'): ").strip().lower() or "name"
+    while sort_field not in ('name', 'rank', 'year', 'playtime'):
+        sort_field = input("Invalid sort field. Enter 'name', 'rank', 'year' or 'playtime' (press Enter to use default 'name'): ").strip().lower() or "name"
+
+    filtered = filter_by_player_count(all_games, player_count)
+    sorted_filtered = sort_games(filtered, sort_field)
+
+    if not sorted_filtered:
+        print("❌ No games match your filter.")
+        return
+
+    # Show owner column in table only if multiple users
+    print_table(sorted_filtered, show_owner=(len(usernames) > 1))
+
+if __name__ == "__main__":
+    main()
