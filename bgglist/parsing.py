@@ -1,7 +1,6 @@
 import xml.etree.ElementTree as ET
 
 from .errors import BGGError
-from .games import Game
 
 def attr(element, path, name="value", default=None):
     """An attribute of the first child matching path, or default if either is missing."""
@@ -28,25 +27,39 @@ def _root(xml_text):
         raise BGGError(f"BoardGameGeek returned an error: {message}")
     return root
 
-def parse_collection_ids(xml_text):
-    # A collection lists a game once per copy owned
-    return list(dict.fromkeys(item.get("objectid") for item in _root(xml_text).findall("item")))
+def parse_collection(xml_text):
+    """Games in a collection response requested with stats=1, keyed by BGG id.
+
+    The values are plain dicts of Game fields, so they can be cached as JSON.
+    """
+    games = {}
+    for item in _root(xml_text).findall("item"):
+        stats = item.find("stats")
+        if stats is None:
+            stats = ET.Element("stats")
+        game_id = item.get("objectid")
+        # A collection lists a game once per copy owned; the entries are the same game
+        games[game_id] = {
+            "id": game_id,
+            "name": (item.findtext("name") or "Unknown").strip(),
+            # BGG uses 0 for an unknown year
+            "year": to_int(item.findtext("yearpublished")) or None,
+            "rank": to_int(attr(stats, "rating/ranks/rank[@name='boardgame']")),
+            "min_players": to_int(stats.get("minplayers"), 0),
+            "max_players": to_int(stats.get("maxplayers"), 0),
+            "playing_time": to_int(stats.get("playingtime"), 0),
+        }
+    return games
 
 def parse_things(xml_text):
-    """Games in a thing response requested with stats=1."""
-    games = []
+    """Details that rarely change, from a thing response, keyed by BGG id."""
+    details = {}
     for item in _root(xml_text).findall("item"):
-        games.append(Game(
-            id=item.get("id"),
+        details[item.get("id")] = {
             # BGG lists every name a game is known by, and the primary one isn't always first
-            name=attr(item, "name[@type='primary']") or attr(item, "name", default="Unknown"),
-            # BGG uses 0 for an unknown year
-            year=to_int(attr(item, "yearpublished")) or None,
-            rank=to_int(attr(item, "statistics/ratings/ranks/rank[@name='boardgame']")),
-            min_players=to_int(attr(item, "minplayers"), 0),
-            max_players=to_int(attr(item, "maxplayers"), 0),
-            playing_time=to_int(attr(item, "playingtime"), 0),
-            min_age=to_int(attr(item, "minage"), 0),
-            categories=[link.get("value") for link in item.findall("link[@type='boardgamecategory']")],
-        ))
-    return games
+            "name": attr(item, "name[@type='primary']") or attr(item, "name", default="Unknown"),
+            "year": to_int(attr(item, "yearpublished")) or None,
+            "min_age": to_int(attr(item, "minage"), 0),
+            "categories": [link.get("value") for link in item.findall("link[@type='boardgamecategory']")],
+        }
+    return details

@@ -1,12 +1,13 @@
 import argparse
 import os
-from collections import defaultdict
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-from .client import THING_BATCH_SIZE, BGGClient, create_session
-from .errors import BGGAuthError, BGGError
+from .cache import Cache, default_cache_dir
+from .client import BGGClient, create_session
+from .collection import build_collection
+from .errors import BGGAuthError
 from .games import SORT_FIELDS, filter_by_player_count, sort_games
 from .output import export_to_csv, print_table
 
@@ -28,6 +29,8 @@ def main():
     parser.add_argument('-p', '--players', help='Number of players', type=int)
     parser.add_argument('-s', '--sort', help='Field to sort by: name, rank, year, playtime', choices=SORT_FIELDS)
     parser.add_argument('-x', '--no-expansions', action='store_true', help='Leave expansions out of the collection')
+    parser.add_argument('--refresh', action='store_true', help='Ask BGG for new data even where the cache is still fresh')
+    parser.add_argument('--cache-dir', default=default_cache_dir(), help='Where to keep cached API results (default: %(default)s)')
     parser.add_argument('-h', '--help', action='help', help='Show this help message and exit')
 
     args = parser.parse_args()
@@ -36,40 +39,15 @@ def main():
     if not args.users:
         args.users = input("Enter BoardGameGeek username(s) (comma-separated if multiple): ")
     usernames = [u.strip() for u in args.users.split(',') if u.strip()]
-    id_to_owners = defaultdict(set)
 
     try:
-        for username in usernames:
-            print(f"Fetching collection for {username}...")
-            try:
-                for gid in client.get_collection_ids(username, args.no_expansions):
-                    id_to_owners[gid].add(username)
-            except BGGAuthError:
-                raise
-            except BGGError as e:
-                print(f"Error with user '{username}':", e)
-
-        all_game_ids = list(id_to_owners.keys())
-        if not all_game_ids:
-            print("❌ No games found.")
-            return
-
-        print(f"Total unique games found: {len(all_game_ids)}")
-        all_games = []
-        for i in range(0, len(all_game_ids), THING_BATCH_SIZE):
-            batch = all_game_ids[i:i + THING_BATCH_SIZE]
-            try:
-                games = client.get_things(batch)
-            except BGGAuthError:
-                raise
-            except BGGError as e:
-                print(f"Failed to fetch batch {','.join(batch)}: {e}")
-                continue
-            for game in games:
-                game.owners = sorted(id_to_owners[game.id])
-            all_games.extend(games)
+        all_games = build_collection(client, Cache(args.cache_dir), usernames, args.no_expansions, args.refresh)
     except BGGAuthError as e:
         raise SystemExit(f"❌ {e}")
+
+    if not all_games:
+        print("❌ No games found.")
+        return
 
     # Export full collection to CSV (always alphabetical)
     export_to_csv(all_games)

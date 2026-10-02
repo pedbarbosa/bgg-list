@@ -5,7 +5,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from .errors import BGGAuthError, BGGError
-from .parsing import parse_collection_ids, parse_things
+from .parsing import parse_collection, parse_things
 
 # BGG asks for the bare domain: the www. subdomain can interfere with authorization
 API_BASE = "https://boardgamegeek.com/xmlapi2"
@@ -75,17 +75,18 @@ class BGGClient:
 
         raise BGGError(f"BoardGameGeek still hadn't prepared {label} after {self.queue_attempts} attempts")
 
-    def get_collection_ids(self, username, exclude_expansions=False):
-        params = {"username": username, "own": 1}
+    def get_collection(self, username, exclude_expansions=False):
+        """The games a user owns, with their rank, player count and play time."""
+        params = {"username": username, "own": 1, "stats": 1}
         if exclude_expansions:
             # BGG returns expansions under the boardgame subtype unless told otherwise
             params["excludesubtype"] = "boardgameexpansion"
         xml_text = self._get("collection", params, f"{username}'s collection")
-        return parse_collection_ids(xml_text)
+        return parse_collection(xml_text)
 
     def get_things(self, game_ids):
-        """Games for up to THING_BATCH_SIZE ids, in one request."""
+        """Names, years, ages and categories for up to THING_BATCH_SIZE ids, in one request."""
         if len(game_ids) > THING_BATCH_SIZE:
             raise ValueError(f"BGG accepts at most {THING_BATCH_SIZE} ids per thing request")
-        xml_text = self._get("thing", {"id": ",".join(game_ids), "stats": 1}, f"details for {len(game_ids)} games")
+        xml_text = self._get("thing", {"id": ",".join(game_ids)}, f"details for {len(game_ids)} games")
         return parse_things(xml_text)
