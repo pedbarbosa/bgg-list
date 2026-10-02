@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 
 @dataclass
 class Game:
@@ -25,6 +25,9 @@ class Game:
     def category(self):
         # Short summary for the table and CSV: the first two categories
         return ", ".join(self.categories[:2]) if self.categories else "N/A"
+
+    def to_dict(self):
+        return {**asdict(self), "url": self.url}
 
 SORT_FIELDS = ("name", "rank", "year", "playtime")
 

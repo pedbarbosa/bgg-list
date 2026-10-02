@@ -1,4 +1,15 @@
 import csv
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+def _alphabetical(games):
+    return sorted(games, key=lambda game: game.name.lower())
+
+def _prepare(filename):
+    path = Path(filename)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
 
 def _year(game):
     return str(game.year) if game.year is not None else "N/A"
@@ -22,12 +33,11 @@ def print_table(games, show_owner=False):
         print(row)
 
 def export_to_csv(games, filename="bgg_collection.csv"):
-    games = sorted(games, key=lambda game: game.name.lower())  # Alphabetical sort
-    with open(filename, mode='w', newline='', encoding='utf-8') as file:
+    with open(_prepare(filename), mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(["Game", "Year", "Board Game Rank", "Players", "Play time", "Min age", "Category", "Owner", "URL"])
 
-        for game in games:
+        for game in _alphabetical(games):
             writer.writerow([
                 game.name,
                 _year(game),
@@ -40,3 +50,14 @@ def export_to_csv(games, filename="bgg_collection.csv"):
                 game.url,
             ])
     print(f"\n✅ Full collection exported to '{filename}'")
+
+def export_to_json(games, filename, usernames):
+    payload = {
+        # BGG's terms ask for BoardGameGeek to be credited as the source of the data
+        "source": "BoardGameGeek",
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "users": list(usernames),
+        "games": [game.to_dict() for game in _alphabetical(games)],
+    }
+    _prepare(filename).write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"✅ Full collection exported to '{filename}'")
