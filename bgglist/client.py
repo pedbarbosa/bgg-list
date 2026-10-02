@@ -64,7 +64,7 @@ class BGGClient:
                 raise BGGError(f"Couldn't reach BoardGameGeek for {label} ({e})") from e
 
             if response.status_code == 202:
-                self.log(f"{label[0].upper()}{label[1:]} not ready. Retrying in {self.queue_wait} seconds...")
+                self.log(f"BoardGameGeek is still preparing {label}. Retrying in {self.queue_wait} seconds...")
                 self.sleep(self.queue_wait)
                 continue
             if response.status_code in (401, 403):
