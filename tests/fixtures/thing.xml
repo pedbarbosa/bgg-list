@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items termsofuse="https://boardgamegeek.com/xmlapi/termsofuse">
+	<item type="boardgame" id="13">
+		<thumbnail>https://cf.geekdo-images.com/catan_t.jpg</thumbnail>
+		<name type="primary" sortindex="1" value="CATAN"/>
+		<name type="alternate" sortindex="1" value="Die Siedler von Catan"/>
+		<description>Trade, build and settle.</description>
+		<yearpublished value="1995"/>
+		<minplayers value="3"/>
+		<maxplayers value="4"/>
+		<playingtime value="120"/>
+		<minage value="10"/>
+		<link type="boardgamecategory" id="1021" value="Economic"/>
+		<link type="boardgamecategory" id="1026" value="Negotiation"/>
+		<link type="boardgamemechanic" id="2072" value="Dice Rolling"/>
+	</item>
+	<item type="boardgame" id="174430">
+		<name type="alternate" sortindex="1" value="Gloomhaven (DE)"/>
+		<name type="primary" sortindex="1" value="Gloomhaven"/>
+		<yearpublished value="2017"/>
+		<minplayers value="1"/>
+		<maxplayers value="4"/>
+		<playingtime value="120"/>
+		<minage value="14"/>
+		<link type="boardgamecategory" id="1022" value="Adventure"/>
+		<link type="boardgamecategory" id="1020" value="Exploration"/>
+		<link type="boardgamecategory" id="1010" value="Fantasy"/>
+	</item>
+	<item type="boardgameexpansion" id="325">
+		<name type="primary" sortindex="1" value="CATAN: Seafarers"/>
+		<yearpublished value="0"/>
+	</item>
+</items>

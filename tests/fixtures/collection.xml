@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<items totalitems="5" termsofuse="https://boardgamegeek.com/xmlapi/termsofuse" pubdate="Thu, 01 Oct 2026 10:00:00 +0000">
+	<item objecttype="thing" objectid="13" subtype="boardgame" collid="1001">
+		<name sortindex="1">CATAN</name>
+		<yearpublished>1995</yearpublished>
+		<stats minplayers="3" maxplayers="4" minplaytime="60" maxplaytime="120" playingtime="120" numowned="250000">
+			<rating value="N/A">
+				<usersrated value="120000"/>
+				<average value="7.1"/>
+				<bayesaverage value="6.9"/>
+				<ranks>
+					<rank type="subtype" id="1" name="boardgame" friendlyname="Board Game Rank" value="500" bayesaverage="6.9"/>
+					<rank type="family" id="5497" name="strategygames" friendlyname="Strategy Game Rank" value="400" bayesaverage="6.9"/>
+				</ranks>
+			</rating>
+		</stats>
+		<status own="1" prevowned="0" fortrade="0" want="0" wanttoplay="0" wanttobuy="0" wishlist="0" preordered="0" lastmodified="2026-01-01 10:00:00"/>
+		<numplays>12</numplays>
+	</item>
+	<item objecttype="thing" objectid="13" subtype="boardgame" collid="1002">
+		<name sortindex="1">CATAN</name>
+		<yearpublished>1995</yearpublished>
+		<stats minplayers="3" maxplayers="4" minplaytime="60" maxplaytime="120" playingtime="120" numowned="250000">
+			<rating value="N/A">
+				<ranks>
+					<rank type="subtype" id="1" name="boardgame" friendlyname="Board Game Rank" value="500" bayesaverage="6.9"/>
+				</ranks>
+			</rating>
+		</stats>
+		<numplays>0</numplays>
+	</item>
+	<item objecttype="thing" objectid="174430" subtype="boardgame" collid="1003">
+		<name sortindex="1">Gloomhaven</name>
+		<yearpublished>2017</yearpublished>
+		<stats minplayers="1" maxplayers="4" minplaytime="60" maxplaytime="120" playingtime="120" numowned="90000">
+			<rating value="9">
+				<ranks>
+					<rank type="family" id="5497" name="strategygames" friendlyname="Strategy Game Rank" value="2" bayesaverage="8.3"/>
+					<rank type="subtype" id="1" name="boardgame" friendlyname="Board Game Rank" value="3" bayesaverage="8.3"/>
+				</ranks>
+			</rating>
+		</stats>
+		<numplays>4</numplays>
+	</item>
+	<item objecttype="thing" objectid="325" subtype="boardgame" collid="1004">
+		<name sortindex="1">CATAN: Seafarers</name>
+		<yearpublished>1997</yearpublished>
+		<stats minplayers="3" maxplayers="4" minplaytime="60" maxplaytime="90" playingtime="90" numowned="40000">
+			<rating value="N/A">
+				<ranks>
+					<rank type="subtype" id="1" name="boardgame" friendlyname="Board Game Rank" value="Not Ranked" bayesaverage="Not Ranked"/>
+				</ranks>
+			</rating>
+		</stats>
+		<numplays>1</numplays>
+	</item>
+	<item objecttype="thing" objectid="9999" subtype="boardgame" collid="1005">
+		<name sortindex="1">Homemade Prototype</name>
+		<numplays>0</numplays>
+	</item>
+</items>
