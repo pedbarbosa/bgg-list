@@ -27,6 +27,7 @@ def main():
     parser.add_argument('-u', '--users', help='Comma-separated list of BGG usernames')
     parser.add_argument('-p', '--players', help='Number of players', type=int)
     parser.add_argument('-s', '--sort', help='Field to sort by: name, rank, year, playtime', choices=SORT_FIELDS)
+    parser.add_argument('-x', '--no-expansions', action='store_true', help='Leave expansions out of the collection')
     parser.add_argument('-h', '--help', action='help', help='Show this help message and exit')
 
     args = parser.parse_args()
@@ -41,7 +42,7 @@ def main():
         for username in usernames:
             print(f"Fetching collection for {username}...")
             try:
-                for gid in client.get_collection_ids(username):
+                for gid in client.get_collection_ids(username, args.no_expansions):
                     id_to_owners[gid].add(username)
             except BGGAuthError:
                 raise

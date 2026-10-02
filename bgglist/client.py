@@ -75,8 +75,12 @@ class BGGClient:
 
         raise BGGError(f"BoardGameGeek still hadn't prepared {label} after {self.queue_attempts} attempts")
 
-    def get_collection_ids(self, username):
-        xml_text = self._get("collection", {"username": username, "own": 1}, f"{username}'s collection")
+    def get_collection_ids(self, username, exclude_expansions=False):
+        params = {"username": username, "own": 1}
+        if exclude_expansions:
+            # BGG returns expansions under the boardgame subtype unless told otherwise
+            params["excludesubtype"] = "boardgameexpansion"
+        xml_text = self._get("collection", params, f"{username}'s collection")
         return parse_collection_ids(xml_text)
 
     def get_things(self, game_ids):
