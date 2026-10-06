@@ -31,13 +31,31 @@ cd bgg-list
 
 ### 2. Install Required Packages
 
-Only one external package is required: `requests`
+Two external packages are required: `requests` and `python-dotenv`
 
-You can install it with:
+You can install them with:
 
 ```
 pip install -r requirements.txt
 ```
+
+### 3. Add your BoardGameGeek API key
+
+BoardGameGeek requires every XML API request to carry an API key (BGG calls it a token). Without one, the API returns `401 Unauthorized`.
+
+1. Register an application at [boardgamegeek.com/applications](https://boardgamegeek.com/applications). A non-commercial application is fine for personal use.
+2. Once BGG approves it, create a token for the application.
+3. Copy the example file and paste the token into it:
+
+```
+cp .env_example .env
+```
+
+```
+BGG_API_KEY=your-token-here
+```
+
+`.env` is listed in `.gitignore`, so the key stays out of the repository. The script reads `.env` from its own folder; a `BGG_API_KEY` already set in your environment takes precedence.
 
 ## 🧪 Usage
 
@@ -88,5 +106,7 @@ Alternatively, you can pass in the values as options:
 This project uses the [BoardGameGeek XML API2](https://boardgamegeek.com/wiki/page/BGG_XML_API2) to fetch:
 - User collections
 - Game details and stats
+
+Every request sends your key as an `Authorization: Bearer` header to `https://boardgamegeek.com/xmlapi2` (BGG asks that the `www.` subdomain not be used). If BGG rejects the key (`401` or `403`), the script stops and tells you to check `BGG_API_KEY`. You can see your usage at [boardgamegeek.com/applications](https://boardgamegeek.com/applications) under "Usage".
 
 Note: The API sometimes responds with `202 Accepted` while it queues your request — the script handles this automatically with retries.

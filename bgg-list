@@ -1,37 +1,60 @@
 #!/usr/bin/env python3
 
+import os
 import requests
 import xml.etree.ElementTree as ET
 import argparse
 import time
 import csv
 from collections import defaultdict
+from pathlib import Path
+from dotenv import load_dotenv
 
-def fetch_collection(username):
+# BGG asks for the bare domain: the www. subdomain can interfere with authorization
+API_BASE = "https://boardgamegeek.com/xmlapi2"
+
+def create_session():
+    # Values already set in the environment take precedence over the .env file
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+    api_key = os.getenv("BGG_API_KEY", "").strip()
+    if not api_key:
+        raise SystemExit("❌ BGG_API_KEY is not set. Copy .env_example to .env and add your BoardGameGeek API key.")
+
+    session = requests.Session()
+    session.headers["Authorization"] = f"Bearer {api_key}"
+    return session
+
+def check_auth(response):
+    if response.status_code in (401, 403):
+        raise SystemExit(f"❌ BoardGameGeek rejected the API key ({response.status_code}). Check BGG_API_KEY in your .env file.")
+
+def fetch_collection(session, username):
     print(f"Fetching collection for {username}...")
-    url = f"https://boardgamegeek.com/xmlapi2/collection?username={username}&own=1"
-    response = requests.get(url)
+    url = f"{API_BASE}/collection?username={username}&own=1"
+    response = session.get(url)
 
     while response.status_code == 202:
         print(f"{username}'s collection not ready. Retrying in 5 seconds...")
         time.sleep(5)
-        response = requests.get(url)
+        response = session.get(url)
 
+    check_auth(response)
     if response.status_code != 200:
         raise Exception(f"Failed to fetch collection for {username}: {response.status_code}")
 
     root = ET.fromstring(response.text)
     return [item.attrib['objectid'] for item in root.findall('item')]
 
-def fetch_game_details(game_ids, id_to_owners):
+def fetch_game_details(session, game_ids, id_to_owners):
     games_info = {}
-    
+
     for i in range(0, len(game_ids), 20):
         batch_ids = ",".join(game_ids[i:i+20])
-        url = f"https://boardgamegeek.com/xmlapi2/thing?id={batch_ids}&stats=1"
-        response = requests.get(url)
+        url = f"{API_BASE}/thing?id={batch_ids}&stats=1"
+        response = session.get(url)
         time.sleep(1)
 
+        check_auth(response)
         if response.status_code != 200:
             print(f"Failed to fetch batch: {batch_ids}")
             continue
@@ -150,6 +173,7 @@ def main():
     parser.add_argument('-h', '--help', action='help', help='Show this help message and exit')
 
     args = parser.parse_args()
+    session = create_session()
 
     if not args.users:
         args.users = input("Enter BoardGameGeek username(s) (comma-separated if multiple): ")
@@ -158,7 +182,7 @@ def main():
 
     for username in usernames:
         try:
-            game_ids = fetch_collection(username)
+            game_ids = fetch_collection(session, username)
             for gid in game_ids:
                 id_to_owners[gid].add(username)
         except Exception as e:
@@ -170,7 +194,7 @@ def main():
         return
 
     print(f"Total unique games found: {len(all_game_ids)}")
-    all_games = fetch_game_details(all_game_ids, id_to_owners)
+    all_games = fetch_game_details(session, all_game_ids, id_to_owners)
 
     # Export full collection to CSV (always alphabetical)
     export_to_csv(all_games)

@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools >= 80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bgg-list"
+version = "0.1.0"
+description = "BoardGameGeek list"
+requires-python = ">=3.10"
+dependencies = [
+    "python-dotenv >= 1.2.4",
+    "requests >= 2.34.2",
+]
+
