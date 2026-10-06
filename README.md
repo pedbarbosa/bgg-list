@@ -172,3 +172,5 @@ Run the tests (standard library only, nothing calls BGG):
 ```
 python3 -m unittest discover
 ```
+
+GitHub Actions runs them on every pull request and push to `main`, on the Python version in `.python-version` with the pinned `requirements.txt`. It also checks that `pip install .` gives a working `bgg-list` command.
