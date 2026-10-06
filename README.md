@@ -16,6 +16,7 @@ Perfect for tracking your library, sharing with friends, or organizing game nigh
 - 🧩 Optionally leaves **expansions** out
 - 💾 **Caches** API results, and falls back on them when BGG is unavailable
 - 🤖 Runs **unattended** (cron, CI) when there's no terminal to prompt
+- 🌐 A responsive **web page** of the collection, refreshed daily on GitHub Pages
 - 📁 CSV export with:
   - Game details
   - Categories
@@ -143,6 +144,33 @@ Cached data doesn't expire on its own. Once it's older than those times, the scr
   - Owner(s)  
   - Direct URL to BGG page
 
+## 🌐 Web page
+
+`site/` holds a static page that lists the collection with search, player-count, play-time and owner filters, and sorting. It's a table on wide screens and cards on phones, and the filters are kept in the address so a filtered list can be shared (for example `?players=4&time=60`).
+
+The [Pages workflow](.github/workflows/pages.yml) publishes it to GitHub Pages daily. BoardGameGeek is only called from GitHub's servers, with the API cache carried between runs, and the page itself only reads the generated `collection.json`, so the key never reaches a browser.
+
+### Setting it up
+
+1. **API key**: add a repository secret `BGG_API_KEY` (Settings → Secrets and variables → Actions). It can be the same key as your `.env`, but BGG asks for each application to be registered, so consider registering the site separately.
+2. **Usernames**: add a repository variable `BGG_USERS` with comma-separated BGG usernames (same page, Variables tab).
+3. **Logo**: BGG's [XML API terms](https://boardgamegeek.com/wiki/page/XML_API_Terms_of_Use) require the "Powered by BGG" logo, linked to BoardGameGeek, on public pages. Download it from the link on that page and save the SVG as `site/assets/powered-by-bgg.svg`. The workflow won't deploy without it.
+4. **Pages**: Settings → Pages → Source: **GitHub Actions**.
+5. Run the **Pages** workflow from the Actions tab. It then runs daily at 19:17 UTC, and whenever `site/` or the code changes on `main`.
+
+The site is published at `https://<user>.github.io/<repository>/` and is public. BGG collections are public too.
+
+GitHub pauses scheduled workflows in public repositories after 60 days without commits; re-enable it from the Actions tab if that happens.
+
+### Previewing it locally
+
+```
+./bgg-list -u alice,bob --no-csv --json site/collection.json
+python3 -m http.server -d site
+```
+
+Then open http://localhost:8000. `site/collection.json` is ignored by Git.
+
 ## 📚 BoardGameGeek API
 
 This project uses the [BoardGameGeek XML API2](https://boardgamegeek.com/wiki/page/BGG_XML_API2) to fetch:
@@ -173,4 +201,10 @@ Run the tests (standard library only, nothing calls BGG):
 python3 -m unittest discover
 ```
 
-GitHub Actions runs them on every pull request and push to `main`, on the Python version in `.python-version` with the pinned `requirements.txt`. It also checks that `pip install .` gives a working `bgg-list` command.
+The web page's filtering and sorting have their own tests, run with Node 22:
+
+```
+node --test tests/test_site.mjs
+```
+
+GitHub Actions runs both on every pull request and push to `main`, on the Python version in `.python-version` with the pinned `requirements.txt`. It also checks that `pip install .` gives a working `bgg-list` command.

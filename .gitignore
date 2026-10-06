@@ -6,3 +6,6 @@ bgg-list.csv
 
 # Python bytecode
 __pycache__/
+
+# Collection data for previewing the web page locally (the Pages workflow generates its own)
+site/collection.json

@@ -1,0 +1,87 @@
+name: Pages
+
+on:
+  schedule:
+    # Daily at 19:17 UTC (05:17 AEST, 06:17 AEDT)
+    - cron: "17 19 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "bgg_list/**"
+      - ".github/workflows/pages.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; let a running one finish
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BGG_API_KEY: ${{ secrets.BGG_API_KEY }}
+      BGG_USERS: ${{ vars.BGG_USERS }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check the settings and the Powered by BGG logo
+        run: |
+          missing=0
+          if [ -z "$BGG_API_KEY" ]; then
+            echo "::error::Add the BGG_API_KEY repository secret (Settings → Secrets and variables → Actions)."
+            missing=1
+          fi
+          if [ -z "$BGG_USERS" ]; then
+            echo "::error::Add the BGG_USERS repository variable: comma-separated BGG usernames (Settings → Secrets and variables → Actions → Variables)."
+            missing=1
+          fi
+          if [ ! -f site/assets/powered-by-bgg.svg ]; then
+            echo "::error::Add BGG's Powered by BGG logo as site/assets/powered-by-bgg.svg. BGG's XML API terms require it on public pages."
+            missing=1
+          fi
+          exit $missing
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
+
+      - name: Install the pinned dependencies
+        run: pip install -r requirements.txt
+
+      # Carry the API cache between runs, so most days only the collections are fetched
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/bgg-list
+          key: bgg-list-cache-${{ github.run_id }}
+          restore-keys: bgg-list-cache-
+
+      - name: Fetch the collection
+        run: |
+          mkdir -p _site
+          cp -R site/. _site/
+          ./bgg-list -u "$BGG_USERS" --no-csv --json _site/collection.json
+          # Without data, fail here so the last good deployment stays up
+          test -s _site/collection.json
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
