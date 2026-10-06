@@ -1,6 +1,6 @@
 import unittest
 
-from bgglist.games import Game, filter_by_player_count, sort_games
+from bgg_list.games import Game, filter_by_player_count, sort_games
 
 GAMES = [
     Game("1", "Azul", year=2017, rank=50, min_players=2, max_players=4, playing_time=45),

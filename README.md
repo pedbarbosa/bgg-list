@@ -31,7 +31,7 @@ git clone https://github.com/pedbarbosa/bgg-list.git
 cd bgg-list
 ```
 
-> The `bgg-list` script needs the `bgglist/` folder next to it, so copying the script on its own is no longer enough.
+> The `bgg-list` script needs the `bgg_list/` folder next to it, so copying the script on its own is no longer enough.
 
 ### 2. Install Required Packages
 
@@ -111,7 +111,7 @@ When there's no terminal (for example under cron or in CI), the script doesn't p
 | `-p`, `--players` | Only list games for this number of players |
 | `-s`, `--sort` | Sort the table by `name` (default), `rank`, `year` or `playtime` |
 | `-x`, `--no-expansions` | Leave expansions out of the collection |
-| `-o`, `--output FILE` | Where to write the CSV (default `bgg_collection.csv`) |
+| `-o`, `--output FILE` | Where to write the CSV (default `bgg-list.csv`) |
 | `--no-csv` | Don't write the CSV |
 | `--json FILE` | Also write the full collection as JSON |
 | `--refresh` | Ask BGG for new data even where the cache is still fresh |
@@ -129,7 +129,7 @@ Cached data doesn't expire on its own. Once it's older than those times, the scr
 
 ## 📁 Output
 
-- A CSV file, `bgg_collection.csv` in the working directory unless `-o` says otherwise.
+- A CSV file, `bgg-list.csv` in the working directory unless `-o` says otherwise.
 - With `--json`, a JSON file with the same games (all categories included), the usernames, and when it was generated.
 - The CSV includes:
 
@@ -155,7 +155,7 @@ The script is gentle with the API: requests are at least a second apart, rate li
 
 ## 🛠️ Development
 
-The code lives in the `bgglist` package; `bgg-list` is a thin entry point.
+The code lives in the `bgg_list` package; `bgg-list` is a thin entry point. Everything else is named `bgg-list` (the repository, the command, the CSV and the cache folder); the package uses an underscore only because Python import names can't contain hyphens.
 
 | Module | Responsibility |
 | --- | --- |

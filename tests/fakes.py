@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from bgglist.errors import BGGError
+from bgg_list.errors import BGGError
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

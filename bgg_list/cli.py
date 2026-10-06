@@ -36,7 +36,7 @@ def parse_args(argv=None):
     parser.add_argument('-p', '--players', help='Only list games for this number of players', type=int)
     parser.add_argument('-s', '--sort', choices=SORT_FIELDS, help=f'Field to sort the table by (default: {DEFAULT_SORT})')
     parser.add_argument('-x', '--no-expansions', action='store_true', help='Leave expansions out of the collection')
-    parser.add_argument('-o', '--output', default='bgg_collection.csv', metavar='FILE', help='CSV file for the full collection (default: %(default)s)')
+    parser.add_argument('-o', '--output', default='bgg-list.csv', metavar='FILE', help='CSV file for the full collection (default: %(default)s)')
     parser.add_argument('--no-csv', action='store_true', help="Don't write the CSV file")
     parser.add_argument('--json', metavar='FILE', help='Also write the full collection to this JSON file')
     parser.add_argument('--refresh', action='store_true', help='Ask BGG for new data even where the cache is still fresh')

@@ -13,9 +13,9 @@ dependencies = [
 ]
 
 [project.scripts]
-bgg-list = "bgglist.cli:main"
+bgg-list = "bgg_list.cli:main"
 
 [tool.setuptools]
-# Only the bgglist package: not the tests, nor the bgg-list script the entry point replaces
-packages = ["bgglist"]
+# Only the bgg_list package: not the tests, nor the bgg-list script the entry point replaces
+packages = ["bgg_list"]
 

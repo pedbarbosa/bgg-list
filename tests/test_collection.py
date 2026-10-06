@@ -2,9 +2,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from bgglist.cache import Cache
-from bgglist.collection import COLLECTION_TTL, DETAILS_TTL, build_collection
-from bgglist.errors import BGGAuthError, BGGError
+from bgg_list.cache import Cache
+from bgg_list.collection import COLLECTION_TTL, DETAILS_TTL, build_collection
+from bgg_list.errors import BGGAuthError, BGGError
 from tests.fakes import FakeClient, FakeClock, details, entry
 
 COLLECTIONS = {

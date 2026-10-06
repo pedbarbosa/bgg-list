@@ -6,8 +6,8 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-from bgglist.games import Game
-from bgglist.output import export_to_csv, export_to_json, print_table
+from bgg_list.games import Game
+from bgg_list.output import export_to_csv, export_to_json, print_table
 
 GAMES = [
     Game("822", "Carcassonne", year=2000, rank=200, min_players=2, max_players=5, playing_time=45,

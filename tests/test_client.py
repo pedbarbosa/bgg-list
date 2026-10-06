@@ -2,8 +2,8 @@ import unittest
 
 import requests
 
-from bgglist.client import API_BASE, TIMEOUT, BGGClient, create_session
-from bgglist.errors import BGGAuthError, BGGError
+from bgg_list.client import API_BASE, TIMEOUT, BGGClient, create_session
+from bgg_list.errors import BGGAuthError, BGGError
 from tests.fakes import fixture
 
 class FakeResponse:

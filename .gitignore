@@ -1,5 +1,5 @@
 # Generated BGG collection CSV
-bgg_collection.csv
+bgg-list.csv
 
 # Local secrets (BGG API key)
 .env
