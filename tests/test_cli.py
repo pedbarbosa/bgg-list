@@ -14,19 +14,33 @@ class LoadApiKeyTest(unittest.TestCase):
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        self.root = Path(temp.name)
-        # Look for .env in a temporary folder, with no key in the environment
+        self.root = Path(temp.name) / "repo"
+        self.current = Path(temp.name) / "current"
+        self.root.mkdir()
+        self.current.mkdir()
+        # Use temporary repository and current folders, with no key in the environment
         for patcher in (mock.patch.object(cli, "ROOT", self.root), mock.patch.dict(os.environ)):
             patcher.start()
             self.addCleanup(patcher.stop)
         os.environ.pop("BGG_API_KEY", None)
+        self.addCleanup(os.chdir, os.getcwd())
+        os.chdir(self.current)
 
-    def test_reads_the_env_file(self):
-        (self.root / ".env").write_text("BGG_API_KEY=from-file\n")
-        self.assertEqual(cli.load_api_key(), "from-file")
+    def test_reads_the_env_file_in_the_repository_folder(self):
+        (self.root / ".env").write_text("BGG_API_KEY=from-repo\n")
+        self.assertEqual(cli.load_api_key(), "from-repo")
+
+    def test_reads_the_env_file_in_the_current_folder(self):
+        (self.current / ".env").write_text("BGG_API_KEY=from-current\n")
+        self.assertEqual(cli.load_api_key(), "from-current")
+
+    def test_current_folder_takes_precedence_over_the_repository(self):
+        (self.root / ".env").write_text("BGG_API_KEY=from-repo\n")
+        (self.current / ".env").write_text("BGG_API_KEY=from-current\n")
+        self.assertEqual(cli.load_api_key(), "from-current")
 
     def test_environment_takes_precedence(self):
-        (self.root / ".env").write_text("BGG_API_KEY=from-file\n")
+        (self.current / ".env").write_text("BGG_API_KEY=from-current\n")
         os.environ["BGG_API_KEY"] = "from-environment"
         self.assertEqual(cli.load_api_key(), "from-environment")
 

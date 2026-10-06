@@ -12,13 +12,15 @@ from .errors import BGGAuthError
 from .games import SORT_FIELDS, filter_by_player_count, sort_games
 from .output import export_to_csv, export_to_json, print_table
 
-# The repository folder, where .env lives
+# The repository folder when running from a clone (site-packages when installed)
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SORT = "name"
 
 def load_api_key():
-    # Values already set in the environment take precedence over the .env file
-    load_dotenv(ROOT / ".env")
+    # load_dotenv never overrides a value that's already set, so the environment wins,
+    # then a .env in the current folder, then one in the repository folder
+    for env_file in (Path.cwd() / ".env", ROOT / ".env"):
+        load_dotenv(env_file)
     api_key = os.getenv("BGG_API_KEY", "").strip()
     if not api_key:
         raise SystemExit("❌ BGG_API_KEY is not set. Copy .env_example to .env and add your BoardGameGeek API key.")

@@ -65,7 +65,13 @@ cp .env_example .env
 BGG_API_KEY=your-token-here
 ```
 
-`.env` is listed in `.gitignore`, so the key stays out of the repository. The script reads `.env` from its own folder; a `BGG_API_KEY` already set in your environment takes precedence.
+`.env` is listed in `.gitignore`, so the key stays out of the repository. The script looks for the key in this order, using the first it finds:
+
+1. A `BGG_API_KEY` already set in your environment
+2. `.env` in the folder you run the command from
+3. `.env` in the repository folder (when running from a clone)
+
+If you installed with `pip install .`, keep `.env` in the folder you run `bgg-list` from, or set `BGG_API_KEY` in your shell profile.
 
 ## 🧪 Usage
 
