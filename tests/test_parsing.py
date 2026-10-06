@@ -83,6 +83,7 @@ class ParseThingsTest(unittest.TestCase):
             "min_age": 10,
             "categories": ["Economic", "Negotiation"],
             "expansion": False,
+            "description": 'Trade, build and settle.\n\nRoll the dice \u2014 then trade "resources".',
         })
 
     def test_uses_the_primary_name_even_when_it_is_not_first(self):
@@ -99,6 +100,7 @@ class ParseThingsTest(unittest.TestCase):
             "min_age": 0,
             "categories": [],
             "expansion": True,
+            "description": "",
         })
 
 if __name__ == "__main__":
