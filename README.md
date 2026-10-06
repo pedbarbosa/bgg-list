@@ -43,6 +43,12 @@ You can install them with:
 pip install -r requirements.txt
 ```
 
+Then run `./bgg-list` from the repository folder. Or install the tool, which adds a `bgg-list` command you can run from any folder:
+
+```
+pip install .
+```
+
 ### 3. Add your BoardGameGeek API key
 
 BoardGameGeek requires every XML API request to carry an API key (BGG calls it a token). Without one, the API returns `401 Unauthorized`.
