@@ -8,12 +8,10 @@ certifi==2026.7.22
     # via requests
 charset-normalizer==3.5.2
     # via requests
-dotenv==0.9.9
-    # via bgg-list (pyproject.toml)
 idna==3.20
     # via requests
 python-dotenv==1.2.4
-    # via dotenv
+    # via bgg-list (pyproject.toml)
 requests==2.34.2
     # via bgg-list (pyproject.toml)
 urllib3==2.8.0
