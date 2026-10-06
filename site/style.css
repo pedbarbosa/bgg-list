@@ -201,9 +201,139 @@ h1 {
   border-radius: 999px;
 }
 
-.games td.categories {
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Description and categories buttons: icons in the table, icons with labels on cards */
+
+.games td.details-cell {
+  white-space: nowrap;
+}
+
+.details {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 6px;
+  font: inherit;
+  font-size: 0.85rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.details + .details {
+  margin-left: 4px;
+}
+
+.details:hover,
+.details[aria-expanded="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.details:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.details::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  flex: none;
+  background: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+}
+
+.details.about {
+  --icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='9'/><path d='M12 11v6M12 7.5v.01'/></svg>");
+}
+
+.details.categories {
+  --icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'><path d='M3 4v7.6l9.4 9.4 8.6-8.6L11.6 3H4a1 1 0 0 0-1 1z'/><circle cx='7.5' cy='7.5' r='1.2'/></svg>");
+}
+
+.details .label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.popover {
+  position: fixed;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 16px));
+  max-height: min(60vh, 420px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.2);
+}
+
+.popover[hidden] {
+  display: none;
+}
+
+.popover-header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px 8px 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.popover-kind {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.popover-close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.popover-close:hover {
+  color: var(--text);
+  background: var(--bg);
+}
+
+.popover-text {
+  margin: 0;
+  padding: 12px 16px 16px;
+  overflow-y: auto;
+  font-size: 0.95rem;
+  /* BGG's descriptions use line breaks between paragraphs */
+  white-space: pre-line;
 }
 
 .message {
@@ -280,10 +410,11 @@ h1 {
     border-color: transparent;
   }
 
+  /* Game on top, then year, rank, players, time and age in one row, then owner and details */
   .games tr {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px 12px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px 8px;
     margin-bottom: 12px;
     padding: 14px;
     background: var(--surface);
@@ -299,20 +430,41 @@ h1 {
   .games td::before {
     content: attr(data-label);
     display: block;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     color: var(--muted);
   }
 
   .games td.name,
-  .games td.categories,
-  .games td.owner {
+  .games td.owner,
+  .games td.details-cell {
     grid-column: 1 / -1;
   }
 
-  .games td.name::before {
+  .games td.name::before,
+  .games td.details-cell::before {
     display: none;
+  }
+
+  .games td.details-cell:empty {
+    display: none;
+  }
+
+  /* Bigger, labelled buttons for fingers */
+  .details {
+    min-height: 40px;
+    padding: 0 12px;
+    background: var(--bg);
+    border-color: var(--border);
+    border-radius: 999px;
+  }
+
+  .details .label {
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
   }
 
   .games td.name a {

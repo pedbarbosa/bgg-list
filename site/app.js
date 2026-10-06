@@ -105,6 +105,16 @@ function addCell(row, label, content, className) {
   cell.append(...(Array.isArray(content) ? content : [content]));
 }
 
+function detailsButton(kind, label, game, text) {
+  const button = Object.assign(document.createElement("button"), { type: "button", className: `details ${kind}` });
+  Object.assign(button.dataset, { kind: label, game: game.name, text });
+  button.setAttribute("aria-label", `${label}: ${game.name}`);
+  button.setAttribute("aria-controls", "popover");
+  button.setAttribute("aria-expanded", "false");
+  button.append(Object.assign(document.createElement("span"), { className: "label", textContent: label }));
+  return button;
+}
+
 function renderRows(tbody, games, showOwners) {
   tbody.replaceChildren(...games.map((game) => {
     const row = document.createElement("tr");
@@ -124,10 +134,107 @@ function renderRows(tbody, games, showOwners) {
     addCell(row, "Players", formatPlayers(game));
     addCell(row, "Time", game.playing_time ? `${game.playing_time} min` : "–");
     addCell(row, "Age", game.min_age ? `${game.min_age}+` : "–");
-    addCell(row, "Categories", game.categories.join(", ") || "–", "categories");
     if (showOwners) addCell(row, "Owner", game.owners.join(", "), "owner");
+    const details = [];
+    if (game.description) details.push(detailsButton("about", "About", game, game.description));
+    if (game.categories.length) details.push(detailsButton("categories", "Categories", game, game.categories.join(", ")));
+    addCell(row, "Details", details, "details-cell");
     return row;
   }));
+}
+
+// The popup for a game's description or categories: it opens on hover with a
+// mouse, or on a tap or click, and closes with its × button, Escape, or a tap elsewhere
+function setUpPopover(table) {
+  const popover = document.getElementById("popover");
+  const kind = document.getElementById("popover-kind");
+  const game = document.getElementById("popover-game");
+  const text = document.getElementById("popover-text");
+  const canHover = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  let anchor = null;
+  let hideTimer;
+
+  // Beside the button where there's room (wide screens), so it doesn't cover the buttons
+  // of the rows below; otherwise below it, or above if it doesn't fit; always inside the window
+  const place = () => {
+    const margin = 8;
+    const button = anchor.getBoundingClientRect();
+    const { offsetWidth: width, offsetHeight: height } = popover;
+    const beside = button.left - width - 6;
+    if (beside >= margin) {
+      popover.style.left = `${beside}px`;
+      popover.style.top = `${Math.min(Math.max(margin, button.top), innerHeight - height - margin)}px`;
+      return;
+    }
+    const left = Math.min(Math.max(margin, button.left), innerWidth - width - margin);
+    const below = button.bottom + 6;
+    const top = below + height <= innerHeight - margin ? below : Math.max(margin, button.top - height - 6);
+    popover.style.left = `${left}px`;
+    popover.style.top = `${top}px`;
+  };
+
+  const open = (button) => {
+    clearTimeout(hideTimer);
+    if (button === anchor) return;
+    anchor?.setAttribute("aria-expanded", "false");
+    anchor = button;
+    kind.textContent = button.dataset.kind;
+    game.textContent = button.dataset.game;
+    text.textContent = button.dataset.text;
+    popover.hidden = false;
+    text.scrollTop = 0;
+    place();
+    button.setAttribute("aria-expanded", "true");
+  };
+
+  const close = () => {
+    clearTimeout(hideTimer);
+    if (!anchor) return;
+    popover.hidden = true;
+    anchor.setAttribute("aria-expanded", "false");
+    anchor = null;
+  };
+
+  // Give the pointer time to move from the button into the popup
+  const closeSoon = () => {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(close, 250);
+  };
+
+  table.addEventListener("click", (event) => {
+    const button = event.target.closest("button.details");
+    if (!button) return;
+    // With a mouse, hovering has already opened it, so a click leaves it open
+    if (button === anchor && !canHover) close();
+    else open(button);
+  });
+  if (canHover) {
+    table.addEventListener("mouseover", (event) => {
+      const button = event.target.closest("button.details");
+      if (button) open(button);
+    });
+    table.addEventListener("mouseout", (event) => {
+      if (event.target.closest("button.details")) closeSoon();
+    });
+    popover.addEventListener("mouseenter", () => clearTimeout(hideTimer));
+    popover.addEventListener("mouseleave", closeSoon);
+  }
+
+  const closeAndRefocus = () => {
+    const button = anchor;
+    close();
+    button?.focus();
+  };
+  popover.querySelector(".popover-close").addEventListener("click", closeAndRefocus);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && anchor) closeAndRefocus();
+  });
+  document.addEventListener("click", (event) => {
+    if (anchor && !popover.contains(event.target) && !event.target.closest("button.details")) close();
+  });
+  addEventListener("scroll", () => anchor && place(), { passive: true });
+  addEventListener("resize", close);
+  return close;
 }
 
 function showMessage(text) {
@@ -171,8 +278,10 @@ async function init() {
   document.getElementById("expansions-filter").hidden = expansions === 0;
   const sort = { field: "name", direction: "asc" };
   restoreFromUrl(form, sort);
+  const closePopover = setUpPopover(table);
 
   const update = () => {
+    closePopover();
     const criteria = readCriteria(form);
     const shown = sortGames(filterGames(games, criteria), sort.field, sort.direction);
     renderRows(table.tBodies[0], shown, showOwners);
