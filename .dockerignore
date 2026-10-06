@@ -1,0 +1,9 @@
+# Only send what the image needs, so secrets such as .env never reach it
+*
+!requirements.txt
+!bgg-list
+!bgg_list/
+!site/
+!docker/
+site/collection.json*
+**/__pycache__
