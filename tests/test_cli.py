@@ -93,6 +93,14 @@ class MainTest(unittest.TestCase):
         self.run_main("-u", "alice", "-o", str(csv_path), "--no-csv")
         self.assertFalse(csv_path.exists())
 
+    def test_no_table(self):
+        json_path = self.folder / "games.json"
+        with mock.patch.object(cli, "print_table") as print_table, mock.patch.object(cli, "ask") as ask:
+            self.run_main("-u", "alice", "--no-csv", "--no-table", "--json", str(json_path))
+        print_table.assert_not_called()
+        ask.assert_not_called()
+        self.assertTrue(json_path.exists())
+
     def test_unattended_run_needs_usernames(self):
         with self.assertRaisesRegex(SystemExit, "No usernames given"):
             self.run_main()

@@ -115,6 +115,7 @@ When there's no terminal (for example under cron or in CI), the script doesn't p
 | `-o`, `--output FILE` | Where to write the CSV (default `bgg-list.csv`) |
 | `--no-csv` | Don't write the CSV |
 | `--json FILE` | Also write the full collection as JSON |
+| `--no-table` | Don't print the table, or ask for its filter and sort |
 | `--refresh` | Ask BGG for new data even where the cache is still fresh |
 | `--cache-dir DIR` | Where to keep cached API results (default `~/.cache/bgg-list`) |
 | `-h`, `--help` | Show the options |
