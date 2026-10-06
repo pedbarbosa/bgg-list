@@ -182,17 +182,19 @@ Then open http://localhost:8000.
 - Pass the key at run time (`-e`, `--env-file .env`, or your platform's secrets); it's never built into the image, and `.dockerignore` keeps `.env` out of it.
 - Mount a volume on `/cache` so the API cache survives restarts and new versions of the image.
 - If a refresh fails (BGG down, key rejected), the page keeps serving the last good data.
-- The page is served by Python's built-in web server, which is fine for a home network. To put it on the internet, run it behind a reverse proxy that handles HTTPS, such as Caddy, Traefik or nginx.
+- The page is served by Python's built-in web server (`bgg_list/serve.py`, which tells browsers to check for changes on every visit), which is fine for a home network. To put it on the internet, run it behind a reverse proxy that handles HTTPS, such as Caddy, Traefik or nginx.
 - Arguments after the image name run `bgg-list` once instead, for example `docker run --rm -e BGG_API_KEY=... bgg-list -u alice -p 4`.
 
 ### Previewing it locally
 
 ```
-./bgg-list -u alice,bob --no-csv --json site/collection.json
-python3 -m http.server -d site
+./bgg-list -u alice,bob --no-csv --no-table --json site/collection.json
+python3 -m bgg_list.serve
 ```
 
-Then open http://localhost:8000. `site/collection.json` is ignored by Git.
+Then open http://localhost:8000. `site/collection.json` is ignored by Git. Regenerate it after updating the code, so it has any new fields the page uses.
+
+Use `bgg_list.serve` rather than `python3 -m http.server`: it tells browsers to check for changes on every visit, so they don't keep running an old `app.js` or `style.css` after an update.
 
 ## 📚 BoardGameGeek API
 
@@ -217,6 +219,7 @@ The code lives in the `bgg_list` package; `bgg-list` is a thin entry point. Ever
 | `games.py` | The `Game` model, filtering and sorting |
 | `output.py` | Terminal table, CSV and JSON |
 | `cli.py` | Options, prompts and `.env` loading |
+| `serve.py` | Serves the web page without letting browsers cache stale files |
 
 Run the tests (standard library only, nothing calls BGG):
 
