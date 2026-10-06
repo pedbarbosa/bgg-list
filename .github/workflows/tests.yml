@@ -29,3 +29,10 @@ jobs:
           pip install --no-deps .
           cd "$RUNNER_TEMP"
           bgg-list --help
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run the web page tests
+        run: node --test tests/test_site.mjs
