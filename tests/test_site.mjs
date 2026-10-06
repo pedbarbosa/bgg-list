@@ -22,7 +22,7 @@ const GAMES = [
   game("brass", { year: 2018, rank: 5, playing_time: 120, owners: ["alice", "bob"] }),
   game("Codenames", { year: null, max_players: 8, playing_time: 15, categories: ["Party Game", "Word Game"] }),
   game("Agricola", { year: 2007, min_players: 1, max_players: 5, playing_time: 120, owners: ["bob"] }),
-  game("Mystery Box", { playing_time: 0 }),
+  game("Mystery Box", { playing_time: 0, expansion: true }),
 ];
 
 const names = (games) => games.map((g) => g.name);
@@ -69,6 +69,11 @@ test("filters by owner", () => {
 
 test("no filters keeps everything", () => {
   assert.equal(filterGames(GAMES).length, GAMES.length);
+});
+
+test("can hide expansions", () => {
+  assert.deepEqual(names(filterGames(GAMES, { hideExpansions: true })), ["Azul", "brass", "Codenames", "Agricola"]);
+  assert.equal(filterGames(GAMES, { hideExpansions: false }).length, GAMES.length);
 });
 
 test("formats player counts", () => {

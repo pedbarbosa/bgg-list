@@ -132,7 +132,7 @@ Cached data doesn't expire on its own. Once it's older than those times, the scr
 ## 📁 Output
 
 - A CSV file, `bgg-list.csv` in the working directory unless `-o` says otherwise.
-- With `--json`, a JSON file with the same games (all categories included), the usernames, and when it was generated.
+- With `--json`, a JSON file with the same games (all categories included, and whether each is an expansion), the usernames, and when it was generated.
 - The CSV includes:
 
   - Game name  
@@ -147,7 +147,7 @@ Cached data doesn't expire on its own. Once it's older than those times, the scr
 
 ## 🌐 Web page
 
-`site/` holds a static page that lists the collection with search, player-count, play-time and owner filters, and sorting. It's a table on wide screens and cards on phones, and the filters are kept in the address so a filtered list can be shared (for example `?players=4&time=60`).
+`site/` holds a static page that lists the collection with search, player-count, play-time and owner filters, and sorting. Expansions are hidden by default; the Expansions dropdown shows them, tagged "Expansion" (it only appears when the collection has any). It's a table on wide screens and cards on phones, and the filters are kept in the address so a filtered list can be shared (for example `?players=4&time=60&expansions=show`).
 
 The page only reads a generated `collection.json`, so BoardGameGeek is only ever called from the server and the key never reaches a browser. The footer shows BGG's "Powered by BGG" logo (`site/assets/powered_by_K_01_SM.png`), linked to BoardGameGeek, which BGG's [XML API terms](https://boardgamegeek.com/wiki/page/XML_API_Terms_of_Use) require on public pages.
 

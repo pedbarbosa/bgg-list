@@ -158,6 +158,18 @@ h1 {
   text-decoration: underline;
 }
 
+.tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: 2px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+}
+
 .games td.categories {
   color: var(--muted);
   font-size: 0.9rem;

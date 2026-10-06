@@ -23,10 +23,11 @@ export function sortGames(games, field) {
   return [...games].sort(COMPARATORS[field] ?? byName);
 }
 
-export function filterGames(games, { query = "", players = null, maxTime = null, owner = "" } = {}) {
+export function filterGames(games, { query = "", players = null, maxTime = null, owner = "", hideExpansions = false } = {}) {
   const needle = query.trim().toLowerCase();
   const matches = (text) => text.toLowerCase().includes(needle);
   return games.filter((game) =>
+    (!hideExpansions || !game.expansion) &&
     (!needle || matches(game.name) || game.categories.some(matches)) &&
     (players == null || (game.min_players <= players && players <= game.max_players)) &&
     // A game with an unknown play time (0) can't promise to fit
@@ -52,6 +53,8 @@ function readCriteria(form) {
     players: number("players"),
     maxTime: number("time"),
     owner: data.get("owner") ?? "",
+    // Expansions are hidden unless asked for
+    hideExpansions: data.get("expansions") !== "show",
     sort: data.get("sort") || "name",
   };
 }
@@ -81,7 +84,7 @@ function addCell(row, label, content, className) {
   const cell = row.insertCell();
   cell.dataset.label = label;
   if (className) cell.className = className;
-  cell.append(content);
+  cell.append(...(Array.isArray(content) ? content : [content]));
 }
 
 function renderRows(tbody, games, showOwners) {
@@ -93,7 +96,11 @@ function renderRows(tbody, games, showOwners) {
       target: "_blank",
       rel: "noopener",
     });
-    addCell(row, "Game", link, "name");
+    const name = [link];
+    if (game.expansion) {
+      name.push(Object.assign(document.createElement("span"), { className: "tag", textContent: "Expansion" }));
+    }
+    addCell(row, "Game", name, "name");
     addCell(row, "Year", String(game.year ?? "–"));
     addCell(row, "Rank", String(game.rank ?? "–"));
     addCell(row, "Players", formatPlayers(game));
@@ -141,6 +148,9 @@ async function init() {
     document.getElementById("owner-filter").hidden = false;
     document.getElementById("owner-column").hidden = false;
   }
+  const expansions = games.filter((game) => game.expansion).length;
+  // Only offer the choice when the collection has expansions
+  document.getElementById("expansions-filter").hidden = expansions === 0;
   restoreFromUrl(form);
 
   const update = () => {
@@ -153,6 +163,13 @@ async function init() {
     count.textContent = shown.length === games.length
       ? `Showing all ${games.length} games`
       : `Showing ${shown.length} of ${games.length} games`;
+    // Only count the expansions the other filters would have shown
+    const hidden = criteria.hideExpansions
+      ? filterGames(games, { ...criteria, hideExpansions: false }).length - shown.length
+      : 0;
+    if (hidden > 0) {
+      count.textContent += ` (${hidden} expansion${hidden === 1 ? "" : "s"} hidden)`;
+    }
     saveToUrl(form);
   };
 
