@@ -12,3 +12,10 @@ dependencies = [
     "requests >= 2.34.2",
 ]
 
+[project.scripts]
+bgg-list = "bgglist.cli:main"
+
+[tool.setuptools]
+# Only the bgglist package: not the tests, nor the bgg-list script the entry point replaces
+packages = ["bgglist"]
+

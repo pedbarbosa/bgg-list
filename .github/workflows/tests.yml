@@ -1,0 +1,31 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
+
+      - name: Install the pinned dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run the tests
+        run: python -m unittest discover -v
+
+      - name: Check the package installs a working bgg-list command
+        run: |
+          pip install --no-deps .
+          cd "$RUNNER_TEMP"
+          bgg-list --help

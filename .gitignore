@@ -3,3 +3,6 @@ bgg_collection.csv
 
 # Local secrets (BGG API key)
 .env
+
+# Python bytecode
+__pycache__/
