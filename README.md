@@ -132,7 +132,7 @@ Cached data doesn't expire on its own. Once it's older than those times, the scr
 ## 📁 Output
 
 - A CSV file, `bgg-list.csv` in the working directory unless `-o` says otherwise.
-- With `--json`, a JSON file with the same games (all categories included, whether each is an expansion, and its description), the usernames, and when it was generated.
+- With `--json`, a JSON file with the same games (all categories included, and whether each is an expansion), the usernames, and when it was generated.
 - The CSV includes:
 
   - Game name  
@@ -147,12 +147,7 @@ Cached data doesn't expire on its own. Once it's older than those times, the scr
 
 ## 🌐 Web page
 
-`site/` holds a static page that lists the collection with search, player-count, play-time and owner filters:
-
-- Choose a column header to sort by it, and again to reverse the order. Unknown values (unranked, no year) stay last.
-- Each game's description and categories open in a small popup from the icons at the end of its row: hover with a mouse, or tap on a phone (tap again, tap elsewhere or use × to close). The description is BGG's full text, as BGG's terms don't allow shortening it.
-- Expansions are hidden by default; the Expansions dropdown shows them, tagged "Expansion" (it only appears when the collection has any).
-- It's a table on wide screens and cards on phones, and the filters and sort are kept in the address so a list can be shared (for example `?players=4&time=60&sort=rank`).
+`site/` holds a static page that lists the collection with search, player-count, play-time and owner filters, and sorting. Expansions are hidden by default; the Expansions dropdown shows them, tagged "Expansion" (it only appears when the collection has any). It's a table on wide screens and cards on phones, and the filters are kept in the address so a filtered list can be shared (for example `?players=4&time=60&expansions=show`).
 
 The page only reads a generated `collection.json`, so BoardGameGeek is only ever called from the server and the key never reaches a browser. The footer shows BGG's "Powered by BGG" logo (`site/assets/powered_by_K_01_SM.png`), linked to BoardGameGeek, which BGG's [XML API terms](https://boardgamegeek.com/wiki/page/XML_API_Terms_of_Use) require on public pages.
 
@@ -182,19 +177,17 @@ Then open http://localhost:8000.
 - Pass the key at run time (`-e`, `--env-file .env`, or your platform's secrets); it's never built into the image, and `.dockerignore` keeps `.env` out of it.
 - Mount a volume on `/cache` so the API cache survives restarts and new versions of the image.
 - If a refresh fails (BGG down, key rejected), the page keeps serving the last good data.
-- The page is served by Python's built-in web server (`bgg_list/serve.py`, which tells browsers to check for changes on every visit), which is fine for a home network. To put it on the internet, run it behind a reverse proxy that handles HTTPS, such as Caddy, Traefik or nginx.
+- The page is served by Python's built-in web server, which is fine for a home network. To put it on the internet, run it behind a reverse proxy that handles HTTPS, such as Caddy, Traefik or nginx.
 - Arguments after the image name run `bgg-list` once instead, for example `docker run --rm -e BGG_API_KEY=... bgg-list -u alice -p 4`.
 
 ### Previewing it locally
 
 ```
-./bgg-list -u alice,bob --no-csv --no-table --json site/collection.json
-python3 -m bgg_list.serve
+./bgg-list -u alice,bob --no-csv --json site/collection.json
+python3 -m http.server -d site
 ```
 
-Then open http://localhost:8000. `site/collection.json` is ignored by Git. Regenerate it after updating the code, so it has any new fields the page uses.
-
-Use `bgg_list.serve` rather than `python3 -m http.server`: it tells browsers to check for changes on every visit, so they don't keep running an old `app.js` or `style.css` after an update.
+Then open http://localhost:8000. `site/collection.json` is ignored by Git.
 
 ## 📚 BoardGameGeek API
 
@@ -219,7 +212,6 @@ The code lives in the `bgg_list` package; `bgg-list` is a thin entry point. Ever
 | `games.py` | The `Game` model, filtering and sorting |
 | `output.py` | Terminal table, CSV and JSON |
 | `cli.py` | Options, prompts and `.env` loading |
-| `serve.py` | Serves the web page without letting browsers cache stale files |
 
 Run the tests (standard library only, nothing calls BGG):
 

@@ -47,6 +47,15 @@
           <option value="show">Shown</option>
         </select>
       </label>
+      <label>
+        <span>Sort by</span>
+        <select name="sort">
+          <option value="name">Name</option>
+          <option value="rank">BGG rank</option>
+          <option value="year">Year</option>
+          <option value="playtime">Play time</option>
+        </select>
+      </label>
       <button type="reset">Clear</button>
     </form>
 
@@ -55,32 +64,20 @@
     <table class="games" id="games" hidden>
       <thead>
         <tr>
-          <th scope="col" data-sort="name"><button type="button">Game</button></th>
-          <th scope="col" data-sort="year"><button type="button">Year</button></th>
-          <th scope="col" data-sort="rank"><button type="button">Rank</button></th>
-          <th scope="col" data-sort="players"><button type="button">Players</button></th>
-          <th scope="col" data-sort="playtime"><button type="button">Time</button></th>
-          <th scope="col" data-sort="age"><button type="button">Age</button></th>
+          <th scope="col">Game</th>
+          <th scope="col">Year</th>
+          <th scope="col">Rank</th>
+          <th scope="col">Players</th>
+          <th scope="col">Time</th>
+          <th scope="col">Age</th>
+          <th scope="col">Categories</th>
           <th scope="col" id="owner-column" hidden>Owner</th>
-          <th scope="col"><span class="visually-hidden">Details</span></th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
 
     <p class="message" id="message" hidden></p>
-
-    <!-- One popup, filled with a game's description or categories when its button is used -->
-    <div class="popover" id="popover" role="dialog" aria-labelledby="popover-game" hidden>
-      <div class="popover-header">
-        <div>
-          <span class="popover-kind" id="popover-kind"></span>
-          <strong id="popover-game"></strong>
-        </div>
-        <button type="button" class="popover-close" aria-label="Close">×</button>
-      </div>
-      <p class="popover-text" id="popover-text"></p>
-    </div>
   </main>
 
   <footer class="page-footer">

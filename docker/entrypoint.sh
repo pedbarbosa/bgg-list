@@ -40,7 +40,7 @@ refresh
 ) &
 refresher=$!
 
-python -m bgg_list.serve --port "$PORT" --directory /app/site &
+python -m http.server "$PORT" --directory /app/site &
 server=$!
 
 # The shell runs as PID 1, so pass docker stop's signal on to both processes

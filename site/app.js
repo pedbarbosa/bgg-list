@@ -2,31 +2,25 @@
 
 const byName = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
 
-// What each sortable column sorts by; null means unknown (unranked, no year, 0 players...)
-const SORT_KEYS = {
-  name: null,
-  year: (game) => game.year,
-  rank: (game) => game.rank,
-  players: (game) => (game.min_players ? [game.min_players, game.max_players] : null),
-  playtime: (game) => game.playing_time || null,
-  age: (game) => game.min_age || null,
+// Unranked games and unknown years sort last, as in the command-line tool
+const missingLast = (field) => (a, b) => {
+  const x = a[field];
+  const y = b[field];
+  if (x == null || y == null) {
+    return (x == null) - (y == null) || byName(a, b);
+  }
+  return x - y || byName(a, b);
 };
 
-export const SORT_FIELDS = Object.keys(SORT_KEYS);
+const COMPARATORS = {
+  name: byName,
+  rank: missingLast("rank"),
+  year: missingLast("year"),
+  playtime: (a, b) => a.playing_time - b.playing_time || byName(a, b),
+};
 
-const compare = (x, y) => (Array.isArray(x) ? x[0] - y[0] || x[1] - y[1] : x - y);
-
-export function sortGames(games, field = "name", direction = "asc") {
-  const sign = direction === "desc" ? -1 : 1;
-  const key = SORT_KEYS[field];
-  return [...games].sort((a, b) => {
-    if (!key) return sign * byName(a, b);
-    const x = key(a);
-    const y = key(b);
-    // Unknown values sort last whichever way the column is sorted; ties sort by name
-    if (x == null || y == null) return (x == null) - (y == null) || byName(a, b);
-    return sign * compare(x, y) || byName(a, b);
-  });
+export function sortGames(games, field) {
+  return [...games].sort(COMPARATORS[field] ?? byName);
 }
 
 export function filterGames(games, { query = "", players = null, maxTime = null, owner = "", hideExpansions = false } = {}) {
@@ -61,36 +55,24 @@ function readCriteria(form) {
     owner: data.get("owner") ?? "",
     // Expansions are hidden unless asked for
     hideExpansions: data.get("expansions") !== "show",
+    sort: data.get("sort") || "name",
   };
 }
 
-// Keep the filters and sort in the address so a filtered list can be shared
-function saveToUrl(form, sort) {
+// Keep the filters in the address so a filtered list can be shared
+function saveToUrl(form) {
   const params = new URLSearchParams();
   for (const [key, value] of new FormData(form)) {
-    if (value) params.set(key, value);
+    if (value && !(key === "sort" && value === "name")) params.set(key, value);
   }
-  if (sort.field !== "name") params.set("sort", sort.field);
-  if (sort.direction === "desc") params.set("order", "desc");
   const search = params.toString();
   history.replaceState(null, "", search ? `?${search}` : location.pathname);
 }
 
-function restoreFromUrl(form, sort) {
-  const params = new URLSearchParams(location.search);
-  for (const [key, value] of params) {
+function restoreFromUrl(form) {
+  for (const [key, value] of new URLSearchParams(location.search)) {
     const field = form.elements.namedItem(key);
     if (field) field.value = value;
-  }
-  if (SORT_FIELDS.includes(params.get("sort"))) sort.field = params.get("sort");
-  if (params.get("order") === "desc") sort.direction = "desc";
-}
-
-function showSort(table, sort) {
-  for (const cell of table.tHead.rows[0].cells) {
-    if (!cell.dataset.sort) continue;
-    const active = cell.dataset.sort === sort.field;
-    cell.setAttribute("aria-sort", !active ? "none" : sort.direction === "asc" ? "ascending" : "descending");
   }
 }
 
@@ -103,16 +85,6 @@ function addCell(row, label, content, className) {
   cell.dataset.label = label;
   if (className) cell.className = className;
   cell.append(...(Array.isArray(content) ? content : [content]));
-}
-
-function detailsButton(kind, label, game, text) {
-  const button = Object.assign(document.createElement("button"), { type: "button", className: `details ${kind}` });
-  Object.assign(button.dataset, { kind: label, game: game.name, text });
-  button.setAttribute("aria-label", `${label}: ${game.name}`);
-  button.setAttribute("aria-controls", "popover");
-  button.setAttribute("aria-expanded", "false");
-  button.append(Object.assign(document.createElement("span"), { className: "label", textContent: label }));
-  return button;
 }
 
 function renderRows(tbody, games, showOwners) {
@@ -134,107 +106,10 @@ function renderRows(tbody, games, showOwners) {
     addCell(row, "Players", formatPlayers(game));
     addCell(row, "Time", game.playing_time ? `${game.playing_time} min` : "–");
     addCell(row, "Age", game.min_age ? `${game.min_age}+` : "–");
+    addCell(row, "Categories", game.categories.join(", ") || "–", "categories");
     if (showOwners) addCell(row, "Owner", game.owners.join(", "), "owner");
-    const details = [];
-    if (game.description) details.push(detailsButton("about", "About", game, game.description));
-    if (game.categories.length) details.push(detailsButton("categories", "Categories", game, game.categories.join(", ")));
-    addCell(row, "Details", details, "details-cell");
     return row;
   }));
-}
-
-// The popup for a game's description or categories: it opens on hover with a
-// mouse, or on a tap or click, and closes with its × button, Escape, or a tap elsewhere
-function setUpPopover(table) {
-  const popover = document.getElementById("popover");
-  const kind = document.getElementById("popover-kind");
-  const game = document.getElementById("popover-game");
-  const text = document.getElementById("popover-text");
-  const canHover = matchMedia("(hover: hover) and (pointer: fine)").matches;
-  let anchor = null;
-  let hideTimer;
-
-  // Beside the button where there's room (wide screens), so it doesn't cover the buttons
-  // of the rows below; otherwise below it, or above if it doesn't fit; always inside the window
-  const place = () => {
-    const margin = 8;
-    const button = anchor.getBoundingClientRect();
-    const { offsetWidth: width, offsetHeight: height } = popover;
-    const beside = button.left - width - 6;
-    if (beside >= margin) {
-      popover.style.left = `${beside}px`;
-      popover.style.top = `${Math.min(Math.max(margin, button.top), innerHeight - height - margin)}px`;
-      return;
-    }
-    const left = Math.min(Math.max(margin, button.left), innerWidth - width - margin);
-    const below = button.bottom + 6;
-    const top = below + height <= innerHeight - margin ? below : Math.max(margin, button.top - height - 6);
-    popover.style.left = `${left}px`;
-    popover.style.top = `${top}px`;
-  };
-
-  const open = (button) => {
-    clearTimeout(hideTimer);
-    if (button === anchor) return;
-    anchor?.setAttribute("aria-expanded", "false");
-    anchor = button;
-    kind.textContent = button.dataset.kind;
-    game.textContent = button.dataset.game;
-    text.textContent = button.dataset.text;
-    popover.hidden = false;
-    text.scrollTop = 0;
-    place();
-    button.setAttribute("aria-expanded", "true");
-  };
-
-  const close = () => {
-    clearTimeout(hideTimer);
-    if (!anchor) return;
-    popover.hidden = true;
-    anchor.setAttribute("aria-expanded", "false");
-    anchor = null;
-  };
-
-  // Give the pointer time to move from the button into the popup
-  const closeSoon = () => {
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(close, 250);
-  };
-
-  table.addEventListener("click", (event) => {
-    const button = event.target.closest("button.details");
-    if (!button) return;
-    // With a mouse, hovering has already opened it, so a click leaves it open
-    if (button === anchor && !canHover) close();
-    else open(button);
-  });
-  if (canHover) {
-    table.addEventListener("mouseover", (event) => {
-      const button = event.target.closest("button.details");
-      if (button) open(button);
-    });
-    table.addEventListener("mouseout", (event) => {
-      if (event.target.closest("button.details")) closeSoon();
-    });
-    popover.addEventListener("mouseenter", () => clearTimeout(hideTimer));
-    popover.addEventListener("mouseleave", closeSoon);
-  }
-
-  const closeAndRefocus = () => {
-    const button = anchor;
-    close();
-    button?.focus();
-  };
-  popover.querySelector(".popover-close").addEventListener("click", closeAndRefocus);
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && anchor) closeAndRefocus();
-  });
-  document.addEventListener("click", (event) => {
-    if (anchor && !popover.contains(event.target) && !event.target.closest("button.details")) close();
-  });
-  addEventListener("scroll", () => anchor && place(), { passive: true });
-  addEventListener("resize", close);
-  return close;
 }
 
 function showMessage(text) {
@@ -276,14 +151,11 @@ async function init() {
   const expansions = games.filter((game) => game.expansion).length;
   // Only offer the choice when the collection has expansions
   document.getElementById("expansions-filter").hidden = expansions === 0;
-  const sort = { field: "name", direction: "asc" };
-  restoreFromUrl(form, sort);
-  const closePopover = setUpPopover(table);
+  restoreFromUrl(form);
 
   const update = () => {
-    closePopover();
     const criteria = readCriteria(form);
-    const shown = sortGames(filterGames(games, criteria), sort.field, sort.direction);
+    const shown = sortGames(filterGames(games, criteria), criteria.sort);
     renderRows(table.tBodies[0], shown, showOwners);
     table.hidden = shown.length === 0;
     document.getElementById("message").hidden = true;
@@ -298,18 +170,9 @@ async function init() {
     if (hidden > 0) {
       count.textContent += ` (${hidden} expansion${hidden === 1 ? "" : "s"} hidden)`;
     }
-    showSort(table, sort);
-    saveToUrl(form, sort);
+    saveToUrl(form);
   };
 
-  // A new column sorts ascending; choosing the sorted column again reverses it
-  table.tHead.addEventListener("click", (event) => {
-    const field = event.target.closest("[data-sort]")?.dataset.sort;
-    if (!field) return;
-    sort.direction = field === sort.field && sort.direction === "asc" ? "desc" : "asc";
-    sort.field = field;
-    update();
-  });
   form.addEventListener("input", update);
   form.addEventListener("submit", (event) => event.preventDefault());
   // Fields only hold their reset values after the reset event has finished
