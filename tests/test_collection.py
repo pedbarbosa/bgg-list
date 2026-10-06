@@ -116,5 +116,11 @@ class BuildCollectionTest(unittest.TestCase):
         self.build(client, usernames=["alice"], exclude_expansions=True)
         self.assertEqual(client.collection_calls, [("alice", True)])
 
+    def test_expansions_are_marked(self):
+        things = {**THINGS, "822": details("Carcassonne: Inns", expansion=True)}
+        games = self.build(FakeClient(COLLECTIONS, things))
+        self.assertTrue(games["822"].expansion)
+        self.assertFalse(games["13"].expansion)
+
 if __name__ == "__main__":
     unittest.main()

@@ -61,5 +61,7 @@ def parse_things(xml_text):
             "year": to_int(attr(item, "yearpublished")) or None,
             "min_age": to_int(attr(item, "minage"), 0),
             "categories": [link.get("value") for link in item.findall("link[@type='boardgamecategory']")],
+            # Collections list expansions as board games; only the thing response tells them apart
+            "expansion": item.get("type") == "boardgameexpansion",
         }
     return details
