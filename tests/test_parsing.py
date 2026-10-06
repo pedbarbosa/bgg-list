@@ -1,8 +1,8 @@
 import unittest
 import xml.etree.ElementTree as ET
 
-from bgglist.errors import BGGError
-from bgglist.parsing import attr, parse_collection, parse_things, to_int
+from bgg_list.errors import BGGError
+from bgg_list.parsing import attr, parse_collection, parse_things, to_int
 from tests.fakes import fixture
 
 class AttrTest(unittest.TestCase):

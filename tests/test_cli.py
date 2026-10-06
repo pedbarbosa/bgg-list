@@ -7,7 +7,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
-from bgglist import cli
+from bgg_list import cli
 from tests.fakes import FakeClient, details, entry
 
 class LoadApiKeyTest(unittest.TestCase):

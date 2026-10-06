@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from bgglist.cache import CACHE_VERSION, Cache
+from bgg_list.cache import CACHE_VERSION, Cache
 from tests.fakes import FakeClock
 
 class CacheTest(unittest.TestCase):

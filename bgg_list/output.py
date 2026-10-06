@@ -32,7 +32,7 @@ def print_table(games, show_owner=False):
             row += f" | {', '.join(game.owners)}"
         print(row)
 
-def export_to_csv(games, filename="bgg_collection.csv"):
+def export_to_csv(games, filename="bgg-list.csv"):
     with open(_prepare(filename), mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(["Game", "Year", "Board Game Rank", "Players", "Play time", "Min age", "Category", "Owner", "URL"])
