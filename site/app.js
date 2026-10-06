@@ -2,25 +2,31 @@
 
 const byName = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
 
-// Unranked games and unknown years sort last, as in the command-line tool
-const missingLast = (field) => (a, b) => {
-  const x = a[field];
-  const y = b[field];
-  if (x == null || y == null) {
-    return (x == null) - (y == null) || byName(a, b);
-  }
-  return x - y || byName(a, b);
+// What each sortable column sorts by; null means unknown (unranked, no year, 0 players...)
+const SORT_KEYS = {
+  name: null,
+  year: (game) => game.year,
+  rank: (game) => game.rank,
+  players: (game) => (game.min_players ? [game.min_players, game.max_players] : null),
+  playtime: (game) => game.playing_time || null,
+  age: (game) => game.min_age || null,
 };
 
-const COMPARATORS = {
-  name: byName,
-  rank: missingLast("rank"),
-  year: missingLast("year"),
-  playtime: (a, b) => a.playing_time - b.playing_time || byName(a, b),
-};
+export const SORT_FIELDS = Object.keys(SORT_KEYS);
 
-export function sortGames(games, field) {
-  return [...games].sort(COMPARATORS[field] ?? byName);
+const compare = (x, y) => (Array.isArray(x) ? x[0] - y[0] || x[1] - y[1] : x - y);
+
+export function sortGames(games, field = "name", direction = "asc") {
+  const sign = direction === "desc" ? -1 : 1;
+  const key = SORT_KEYS[field];
+  return [...games].sort((a, b) => {
+    if (!key) return sign * byName(a, b);
+    const x = key(a);
+    const y = key(b);
+    // Unknown values sort last whichever way the column is sorted; ties sort by name
+    if (x == null || y == null) return (x == null) - (y == null) || byName(a, b);
+    return sign * compare(x, y) || byName(a, b);
+  });
 }
 
 export function filterGames(games, { query = "", players = null, maxTime = null, owner = "", hideExpansions = false } = {}) {
@@ -55,24 +61,36 @@ function readCriteria(form) {
     owner: data.get("owner") ?? "",
     // Expansions are hidden unless asked for
     hideExpansions: data.get("expansions") !== "show",
-    sort: data.get("sort") || "name",
   };
 }
 
-// Keep the filters in the address so a filtered list can be shared
-function saveToUrl(form) {
+// Keep the filters and sort in the address so a filtered list can be shared
+function saveToUrl(form, sort) {
   const params = new URLSearchParams();
   for (const [key, value] of new FormData(form)) {
-    if (value && !(key === "sort" && value === "name")) params.set(key, value);
+    if (value) params.set(key, value);
   }
+  if (sort.field !== "name") params.set("sort", sort.field);
+  if (sort.direction === "desc") params.set("order", "desc");
   const search = params.toString();
   history.replaceState(null, "", search ? `?${search}` : location.pathname);
 }
 
-function restoreFromUrl(form) {
-  for (const [key, value] of new URLSearchParams(location.search)) {
+function restoreFromUrl(form, sort) {
+  const params = new URLSearchParams(location.search);
+  for (const [key, value] of params) {
     const field = form.elements.namedItem(key);
     if (field) field.value = value;
+  }
+  if (SORT_FIELDS.includes(params.get("sort"))) sort.field = params.get("sort");
+  if (params.get("order") === "desc") sort.direction = "desc";
+}
+
+function showSort(table, sort) {
+  for (const cell of table.tHead.rows[0].cells) {
+    if (!cell.dataset.sort) continue;
+    const active = cell.dataset.sort === sort.field;
+    cell.setAttribute("aria-sort", !active ? "none" : sort.direction === "asc" ? "ascending" : "descending");
   }
 }
 
@@ -151,11 +169,12 @@ async function init() {
   const expansions = games.filter((game) => game.expansion).length;
   // Only offer the choice when the collection has expansions
   document.getElementById("expansions-filter").hidden = expansions === 0;
-  restoreFromUrl(form);
+  const sort = { field: "name", direction: "asc" };
+  restoreFromUrl(form, sort);
 
   const update = () => {
     const criteria = readCriteria(form);
-    const shown = sortGames(filterGames(games, criteria), criteria.sort);
+    const shown = sortGames(filterGames(games, criteria), sort.field, sort.direction);
     renderRows(table.tBodies[0], shown, showOwners);
     table.hidden = shown.length === 0;
     document.getElementById("message").hidden = true;
@@ -170,9 +189,18 @@ async function init() {
     if (hidden > 0) {
       count.textContent += ` (${hidden} expansion${hidden === 1 ? "" : "s"} hidden)`;
     }
-    saveToUrl(form);
+    showSort(table, sort);
+    saveToUrl(form, sort);
   };
 
+  // A new column sorts ascending; choosing the sorted column again reverses it
+  table.tHead.addEventListener("click", (event) => {
+    const field = event.target.closest("[data-sort]")?.dataset.sort;
+    if (!field) return;
+    sort.direction = field === sort.field && sort.direction === "asc" ? "desc" : "asc";
+    sort.field = field;
+    update();
+  });
   form.addEventListener("input", update);
   form.addEventListener("submit", (event) => event.preventDefault());
   // Fields only hold their reset values after the reset event has finished
