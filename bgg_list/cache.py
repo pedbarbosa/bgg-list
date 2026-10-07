@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 
 # Bump when the shape of cached data changes, so old caches are ignored
-CACHE_VERSION = 1
+CACHE_VERSION = 3  # 2: details record whether a game is an expansion; 3: and its description
 
 def default_cache_dir():
     return Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "bgg-list"

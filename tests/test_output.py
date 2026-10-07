@@ -13,7 +13,7 @@ GAMES = [
     Game("822", "Carcassonne", year=2000, rank=200, min_players=2, max_players=5, playing_time=45,
          min_age=7, categories=["City Building", "Medieval", "Territory"], owners=["alice"]),
     Game("13", "CATAN", year=None, rank=None, min_players=3, max_players=4, playing_time=120,
-         min_age=10, owners=["alice", "bob"]),
+         min_age=10, expansion=True, owners=["alice", "bob"]),
 ]
 
 class ExportTest(unittest.TestCase):
@@ -45,6 +45,7 @@ class ExportTest(unittest.TestCase):
         self.assertEqual([game["name"] for game in payload["games"]], ["Carcassonne", "CATAN"])
         self.assertEqual(payload["games"][0]["categories"], ["City Building", "Medieval", "Territory"])
         self.assertIsNone(payload["games"][1]["rank"])
+        self.assertEqual([game["expansion"] for game in payload["games"]], [False, True])
 
 class PrintTableTest(unittest.TestCase):
     def table(self, show_owner):

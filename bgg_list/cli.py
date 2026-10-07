@@ -39,6 +39,7 @@ def parse_args(argv=None):
     parser.add_argument('-o', '--output', default='bgg-list.csv', metavar='FILE', help='CSV file for the full collection (default: %(default)s)')
     parser.add_argument('--no-csv', action='store_true', help="Don't write the CSV file")
     parser.add_argument('--json', metavar='FILE', help='Also write the full collection to this JSON file')
+    parser.add_argument('--no-table', action='store_true', help="Don't print the table (or ask for its filter and sort)")
     parser.add_argument('--refresh', action='store_true', help='Ask BGG for new data even where the cache is still fresh')
     parser.add_argument('--cache-dir', default=default_cache_dir(), help='Where to keep cached API results (default: %(default)s)')
     parser.add_argument('-h', '--help', action='help', help='Show this help message and exit')
@@ -73,6 +74,8 @@ def main(argv=None):
         export_to_csv(all_games, args.output)
     if args.json:
         export_to_json(all_games, args.json, usernames)
+    if args.no_table:
+        return
 
     player_count = args.players
     if player_count is None:

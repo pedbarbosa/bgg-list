@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Board Game Collection</title>
+  <meta name="description" content="Search and filter our board game collection by players, play time and owner.">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="page-header">
+    <h1>Board Game Collection</h1>
+    <p class="meta" id="meta">Loading the collection…</p>
+  </header>
+
+  <main>
+    <form class="filters" id="filters" role="search">
+      <label class="search">
+        <span>Search</span>
+        <input type="search" name="q" placeholder="Game or category" autocomplete="off">
+      </label>
+      <label>
+        <span>Players</span>
+        <select name="players"><option value="">Any</option></select>
+      </label>
+      <label>
+        <span>Play time</span>
+        <select name="time">
+          <option value="">Any</option>
+          <option value="30">Up to 30 min</option>
+          <option value="45">Up to 45 min</option>
+          <option value="60">Up to 1 hour</option>
+          <option value="90">Up to 1½ hours</option>
+          <option value="120">Up to 2 hours</option>
+          <option value="180">Up to 3 hours</option>
+        </select>
+      </label>
+      <label id="owner-filter" hidden>
+        <span>Owner</span>
+        <select name="owner"><option value="">Anyone</option></select>
+      </label>
+      <label id="expansions-filter" hidden>
+        <span>Expansions</span>
+        <select name="expansions">
+          <option value="">Hidden</option>
+          <option value="show">Shown</option>
+        </select>
+      </label>
+      <label>
+        <span>Sort by</span>
+        <select name="sort">
+          <option value="name">Name</option>
+          <option value="rank">BGG rank</option>
+          <option value="year">Year</option>
+          <option value="playtime">Play time</option>
+        </select>
+      </label>
+      <button type="reset">Clear</button>
+    </form>
+
+    <p class="count" id="count" aria-live="polite"></p>
+
+    <table class="games" id="games" hidden>
+      <thead>
+        <tr>
+          <th scope="col">Game</th>
+          <th scope="col">Year</th>
+          <th scope="col">Rank</th>
+          <th scope="col">Players</th>
+          <th scope="col">Time</th>
+          <th scope="col">Age</th>
+          <th scope="col">Categories</th>
+          <th scope="col" id="owner-column" hidden>Owner</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <p class="message" id="message" hidden></p>
+  </main>
+
+  <footer class="page-footer">
+    <p>Game data from <a href="https://boardgamegeek.com">BoardGameGeek</a>, refreshed daily.</p>
+    <a class="powered-by" href="https://boardgamegeek.com">
+      <img src="assets/powered_by_K_01_SM.png" alt="Powered by BGG" width="136" height="40">
+    </a>
+  </footer>
+</body>
+</html>

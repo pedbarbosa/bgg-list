@@ -82,10 +82,16 @@ class ParseThingsTest(unittest.TestCase):
             "year": 1995,
             "min_age": 10,
             "categories": ["Economic", "Negotiation"],
+            "expansion": False,
+            "description": 'Trade, build and settle.\n\nRoll the dice \u2014 then trade "resources".',
         })
 
     def test_uses_the_primary_name_even_when_it_is_not_first(self):
         self.assertEqual(self.details["174430"]["name"], "Gloomhaven")
+
+    def test_recognises_expansions(self):
+        self.assertTrue(self.details["325"]["expansion"])
+        self.assertFalse(self.details["174430"]["expansion"])
 
     def test_year_zero_and_missing_fields_fall_back_to_defaults(self):
         self.assertEqual(self.details["325"], {
@@ -93,6 +99,8 @@ class ParseThingsTest(unittest.TestCase):
             "year": None,
             "min_age": 0,
             "categories": [],
+            "expansion": True,
+            "description": "",
         })
 
 if __name__ == "__main__":

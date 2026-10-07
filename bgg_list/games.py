@@ -11,6 +11,8 @@ class Game:
     playing_time: int = 0
     min_age: int = 0
     categories: list[str] = field(default_factory=list)
+    expansion: bool = False
+    description: str = ""
     owners: list[str] = field(default_factory=list)
 
     @property

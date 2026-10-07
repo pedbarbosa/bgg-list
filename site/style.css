@@ -1,0 +1,269 @@
+:root {
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --text: #1f2328;
+  --muted: #5f6670;
+  --border: #dedbd2;
+  --accent: #3f3a8f;
+  --accent-soft: #ecebfa;
+  --radius: 10px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15161a;
+    --surface: #1f2026;
+    --text: #e8e6e3;
+    --muted: #a2a6ad;
+    --border: #34363d;
+    --accent: #a9a4f5;
+    --accent-soft: #2a2944;
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+a {
+  color: var(--accent);
+}
+
+.page-header,
+main,
+.page-footer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.page-header {
+  padding-top: 32px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+
+.meta,
+.count {
+  color: var(--muted);
+}
+
+.meta {
+  margin: 4px 0 24px;
+}
+
+/* Filters */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.filters .search {
+  flex: 1 1 220px;
+}
+
+.filters input,
+.filters select,
+.filters button {
+  min-height: 40px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.filters button {
+  cursor: pointer;
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.filters :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.count {
+  margin: 16px 0 8px;
+}
+
+/* Table on wide screens */
+
+.games {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.games th,
+.games td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.games th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.games tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.games td.name a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.games td.name a:hover {
+  text-decoration: underline;
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: 2px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+}
+
+.games td.categories {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.message {
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+/* Cards on narrow screens */
+
+@media (max-width: 720px) {
+  .filters label:not(.search) {
+    flex: 1 1 calc(50% - 6px);
+  }
+
+  .filters button {
+    flex: 1 1 100%;
+  }
+
+  .games,
+  .games tbody {
+    display: block;
+    background: none;
+    border: 0;
+  }
+
+  .games thead {
+    display: none;
+  }
+
+  .games tr {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px 12px;
+    margin-bottom: 12px;
+    padding: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .games td {
+    padding: 0;
+    border: 0;
+  }
+
+  .games td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .games td.name,
+  .games td.categories,
+  .games td.owner {
+    grid-column: 1 / -1;
+  }
+
+  .games td.name::before {
+    display: none;
+  }
+
+  .games td.name a {
+    font-size: 1.1rem;
+  }
+}
+
+/* Footer */
+
+.page-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 32px;
+  padding-bottom: 32px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* A light badge keeps BGG's full-colour logo legible in dark mode */
+.powered-by {
+  display: inline-flex;
+  padding: 6px 10px;
+  background: #ffffff;
+  border-radius: 8px;
+}

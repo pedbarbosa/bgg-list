@@ -21,9 +21,10 @@ def entry(game_id, name, rank=None, min_players=2, max_players=4, playing_time=6
         "playing_time": playing_time,
     }
 
-def details(name, min_age=10, categories=("Strategy",), year=2020):
+def details(name, min_age=10, categories=("Strategy",), year=2020, expansion=False, description=""):
     """Game details, as parse_things returns them."""
-    return {"name": name, "year": year, "min_age": min_age, "categories": list(categories)}
+    return {"name": name, "year": year, "min_age": min_age, "categories": list(categories),
+            "expansion": expansion, "description": description}
 
 class FakeClock:
     def __init__(self, now=1_000_000.0):

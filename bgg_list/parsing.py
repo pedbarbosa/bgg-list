@@ -1,3 +1,4 @@
+import html
 import xml.etree.ElementTree as ET
 
 from .errors import BGGError
@@ -61,5 +62,9 @@ def parse_things(xml_text):
             "year": to_int(attr(item, "yearpublished")) or None,
             "min_age": to_int(attr(item, "minage"), 0),
             "categories": [link.get("value") for link in item.findall("link[@type='boardgamecategory']")],
+            # Collections list expansions as board games; only the thing response tells them apart
+            "expansion": item.get("type") == "boardgameexpansion",
+            # BGG escapes the description twice (&amp;#10; for a new line); XML parsing undoes one
+            "description": html.unescape(item.findtext("description") or "").strip(),
         }
     return details

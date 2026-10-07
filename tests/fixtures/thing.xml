@@ -4,7 +4,7 @@
 		<thumbnail>https://cf.geekdo-images.com/catan_t.jpg</thumbnail>
 		<name type="primary" sortindex="1" value="CATAN"/>
 		<name type="alternate" sortindex="1" value="Die Siedler von Catan"/>
-		<description>Trade, build and settle.</description>
+		<description>Trade, build and settle.&amp;#10;&amp;#10;Roll the dice &amp;mdash; then trade &amp;quot;resources&amp;quot;.</description>
 		<yearpublished value="1995"/>
 		<minplayers value="3"/>
 		<maxplayers value="4"/>

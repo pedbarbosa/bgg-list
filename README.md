@@ -16,6 +16,7 @@ Perfect for tracking your library, sharing with friends, or organizing game nigh
 - 🧩 Optionally leaves **expansions** out
 - 💾 **Caches** API results, and falls back on them when BGG is unavailable
 - 🤖 Runs **unattended** (cron, CI) when there's no terminal to prompt
+- 🌐 A responsive **web page** of the collection, served from a Docker container that keeps it up to date
 - 📁 CSV export with:
   - Game details
   - Categories
@@ -114,6 +115,7 @@ When there's no terminal (for example under cron or in CI), the script doesn't p
 | `-o`, `--output FILE` | Where to write the CSV (default `bgg-list.csv`) |
 | `--no-csv` | Don't write the CSV |
 | `--json FILE` | Also write the full collection as JSON |
+| `--no-table` | Don't print the table, or ask for its filter and sort |
 | `--refresh` | Ask BGG for new data even where the cache is still fresh |
 | `--cache-dir DIR` | Where to keep cached API results (default `~/.cache/bgg-list`) |
 | `-h`, `--help` | Show the options |
@@ -130,7 +132,7 @@ Cached data doesn't expire on its own. Once it's older than those times, the scr
 ## 📁 Output
 
 - A CSV file, `bgg-list.csv` in the working directory unless `-o` says otherwise.
-- With `--json`, a JSON file with the same games (all categories included), the usernames, and when it was generated.
+- With `--json`, a JSON file with the same games (all categories included, and whether each is an expansion), the usernames, and when it was generated.
 - The CSV includes:
 
   - Game name  
@@ -142,6 +144,50 @@ Cached data doesn't expire on its own. Once it's older than those times, the scr
   - Categories (up to 2)  
   - Owner(s)  
   - Direct URL to BGG page
+
+## 🌐 Web page
+
+`site/` holds a static page that lists the collection with search, player-count, play-time and owner filters, and sorting. Expansions are hidden by default; the Expansions dropdown shows them, tagged "Expansion" (it only appears when the collection has any). It's a table on wide screens and cards on phones, and the filters are kept in the address so a filtered list can be shared (for example `?players=4&time=60&expansions=show`).
+
+The page only reads a generated `collection.json`, so BoardGameGeek is only ever called from the server and the key never reaches a browser. The footer shows BGG's "Powered by BGG" logo (`site/assets/powered_by_K_01_SM.png`), linked to BoardGameGeek, which BGG's [XML API terms](https://boardgamegeek.com/wiki/page/XML_API_Terms_of_Use) require on public pages.
+
+### Running it in a container
+
+The `Dockerfile` builds an image that fetches the collection, serves the page on port 8000, and refreshes the collection on a schedule:
+
+```
+docker build -t bgg-list .
+docker run -d --name bgg-list -p 8000:8000 \
+  -e BGG_API_KEY=your-token-here \
+  -e BGG_USERS=alice,bob \
+  -v bgg-list-cache:/cache \
+  bgg-list
+```
+
+Then open http://localhost:8000.
+
+| Variable | What it does |
+| --- | --- |
+| `BGG_API_KEY` | Your BoardGameGeek API key (required) |
+| `BGG_USERS` | Comma-separated BGG usernames (required) |
+| `BGG_REFRESH_HOURS` | Hours between refreshes (default `24`) |
+| `BGG_OPTIONS` | Extra `bgg-list` options for each refresh, such as `-x` to leave expansions out |
+| `PORT` | Port to serve on inside the container (default `8000`) |
+
+- Pass the key at run time (`-e`, `--env-file .env`, or your platform's secrets); it's never built into the image, and `.dockerignore` keeps `.env` out of it.
+- Mount a volume on `/cache` so the API cache survives restarts and new versions of the image.
+- If a refresh fails (BGG down, key rejected), the page keeps serving the last good data.
+- The page is served by Python's built-in web server, which is fine for a home network. To put it on the internet, run it behind a reverse proxy that handles HTTPS, such as Caddy, Traefik or nginx.
+- Arguments after the image name run `bgg-list` once instead, for example `docker run --rm -e BGG_API_KEY=... bgg-list -u alice -p 4`.
+
+### Previewing it locally
+
+```
+./bgg-list -u alice,bob --no-csv --json site/collection.json
+python3 -m http.server -d site
+```
+
+Then open http://localhost:8000. `site/collection.json` is ignored by Git.
 
 ## 📚 BoardGameGeek API
 
@@ -173,4 +219,10 @@ Run the tests (standard library only, nothing calls BGG):
 python3 -m unittest discover
 ```
 
-GitHub Actions runs them on every pull request and push to `main`, on the Python version in `.python-version` with the pinned `requirements.txt`. It also checks that `pip install .` gives a working `bgg-list` command.
+The web page's filtering and sorting have their own tests, run with Node 22:
+
+```
+node --test tests/test_site.mjs
+```
+
+GitHub Actions runs both on every pull request and push to `main`, on the Python version in `.python-version` with the pinned `requirements.txt`. It also checks that `pip install .` gives a working `bgg-list` command.
